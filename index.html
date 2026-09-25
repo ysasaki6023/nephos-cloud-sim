@@ -773,11 +773,13 @@ function buildBase(){const nz=S.nz,dx=S.dx,env=S.env;baseRow0=new Float32Array(n
    const Tt=T0z(z,env);const pi=Math.pow(p/p00,0.2857);const th=Tt/pi;const rho=p/(Rd*Tt);const qv=RHz(z,env)*qsat(esw(Tt),p);
    baseRow0.set([th,rho,pi,qv],k*4);baseRow1.set([streamU(0,z),0,0,0],k*4);}}
  const all=new Float32Array(nz*8);all.set(baseRow0,0);all.set(baseRow1,nz*4);upload(T.base,all);}
+// 気流の符号付き u: 風速は正の値で入力し、向きは流入側で決める (西=右向き正, 東=左向き負)。ユーザーが東側に正の u を入れて逆向きに強制する事故 (2026-09-25) を防ぐ
+function sU(st){return st.side<0?Math.abs(st.u):-Math.abs(st.u);}
 function streamsAt(z){let W=null,E=null;for(const s of S.streams){if(z>=s.z0&&z<s.z1){if(s.side<0&&!W)W=s;if(s.side>0&&!E)E=s;}}return [W,E];}
-function streamU(x,z){const [W,E]=streamsAt(z);if(W&&E){const f=clamp((x-S.Lx/2)/3000+0.5,0,1);return W.u*(1-f)+E.u*f;}return W?W.u:(E?E.u:0);}
+function streamU(x,z){const [W,E]=streamsAt(z);if(W&&E){const f=clamp((x-S.Lx/2)/3000+0.5,0,1);return sU(W)*(1-f)+sU(E)*f;}return W?sU(W):(E?sU(E):0);}
 function taper(st,z){const m=0.5*(st.z0+st.z1);const t=clamp((z-m)/(st.z1-m),0,1);return st.dT*(1-t*t*(3-2*t));}
-function streamMix(x,z){const [W,E]=streamsAt(z);if(W&&E){const f=clamp((x-S.Lx/2)/3000+0.5,0,1);const ff=f*f*(3-2*f);return {dT:taper(W,z)*(1-ff)+taper(E,z)*ff,rh:W.rh*(1-ff)+E.rh*ff,u:W.u*(1-ff)+E.u*ff};}
- const s=W||E;return s?{dT:taper(s,z),rh:s.rh,u:s.u}:null;}
+function streamMix(x,z){const [W,E]=streamsAt(z);if(W&&E){const f=clamp((x-S.Lx/2)/3000+0.5,0,1);const ff=f*f*(3-2*f);return {dT:taper(W,z)*(1-ff)+taper(E,z)*ff,rh:W.rh*(1-ff)+E.rh*ff,u:sU(W)*(1-ff)+sU(E)*ff};}
+ const s=W||E;return s?{dT:taper(s,z),rh:s.rh,u:sU(s)}:null;}
 
 // --- terrain
 function buildTerrainFromSpec(spec){const nx=S.nx;terrH=new Float32Array(nx);terrM=new Uint8Array(nx);
@@ -843,7 +845,7 @@ function pressureSolve(){const c=common();draw(P.div,{...c,uVel:T.velA},[T.div])
  for(let i=0;i<S.jacobi;i++){draw(P.jac,{...c,uP:T.pA,uDiv:T.div},[T.pB]);swap('pA','pB');}
  if(S.lat!==0){draw(P.pin,{...c,uP:T.pA,uRef:[S.nx>>1,S.nz-2]},[T.pB]);swap('pA','pB');}
  draw(P.grad,{...c,uP:T.pA,uVel:T.velA},[T.velB]);swap('velA','velB');}
-function airUniforms(){const a=new Float32Array(32),b=new Float32Array(32);S.streams.slice(0,8).forEach((s,i)=>{a.set([s.side,s.z0,s.z1,s.u],i*4);b.set([s.dT,s.rh,1,0],i*4);});return {uAirA:a,uAirB:b,uNAir:Math.min(8,S.streams.length)};}
+function airUniforms(){const a=new Float32Array(32),b=new Float32Array(32);S.streams.slice(0,8).forEach((s,i)=>{a.set([s.side,s.z0,s.z1,sU(s)],i*4);b.set([s.dT,s.rh,1,0],i*4);});return {uAirA:a,uAirB:b,uNAir:Math.min(8,S.streams.length)};}
 function step(){const c=common(),n=S.num,m=S.micro;
  // advection (velocity first, using pre-step velocity for all)
  advectMC('th',1);advectMC('hy',2);advectMC('vel',0);
@@ -981,7 +983,7 @@ function classify(o){if(o.top<0)return '雲なし';const depth=o.top-o.base;cons
 // ------------------------------------------------------------
 const PRESETS=[
  {n:'積乱雲 — 湿潤・不安定・弱いシアー',mode:0,env:{sfcT:29,lapse:6.8,tropo:12500,strat:1.5,rhSfc:0.85,rhTop:0.25,invZ:0,invDT:0,layers:[{z0:0,z1:2500,rh:0.82}]},terrain:{mountains:[{x:0.62,h:400,w:5000}],landMat:1,rough:60},mats:[[0,24,1],[1,34,0.4]],streams:[{side:-1,z0:0,z1:3000,u:3,dT:0,rh:-1},{side:-1,z0:3000,z1:16000,u:12,dT:0,rh:-1}],micro:{radTop:1.5},bubble:{x:0.38,z:900,amp:1.5,r:1400},sun:[42,-1],noise:0.03},
- {n:'停滞前線 — 暖湿気流と寒気の衝突 (乱層雲)',mode:0,env:{sfcT:20,lapse:5.8,tropo:11000,strat:1.0,rhSfc:0.75,rhTop:0.3,invZ:0,invDT:0,layers:[]},terrain:{landMat:1,rough:40},mats:[[1,22,0.4]],streams:[{side:-1,z0:0,z1:11000,u:9,dT:4,rh:0.86},{side:1,z0:0,z1:2500,u:-7,dT:-4,rh:0.55}],micro:{radTop:1.0},sun:[28,-1],noise:0.02},
+ {n:'停滞前線 — 暖湿気流と寒気の衝突 (乱層雲)',mode:0,env:{sfcT:20,lapse:5.8,tropo:11000,strat:1.0,rhSfc:0.75,rhTop:0.3,invZ:0,invDT:0,layers:[]},terrain:{landMat:1,rough:40},mats:[[1,22,0.4]],streams:[{side:-1,z0:0,z1:11000,u:9,dT:4,rh:0.86},{side:1,z0:0,z1:2500,u:7,dT:-4,rh:0.55}],micro:{radTop:1.0},sun:[28,-1],noise:0.02},
  {n:'山岳波 — 笠雲・レンズ雲・ローター',mode:0,env:{sfcT:15,lapse:6.5,tropo:11000,strat:1.0,rhSfc:0.7,rhTop:0.35,invZ:0,invDT:0,layers:[{z0:1500,z1:4200,rh:0.86}]},terrain:{mountains:[{x:0.36,h:900,w:2500}],landMat:2,rough:60},mats:[[2,16,0.4]],streams:[{side:-1,z0:0,z1:3000,u:18,dT:0,rh:-1},{side:-1,z0:3000,z1:16000,u:30,dT:0,rh:-1}],micro:{radTop:0.5},sun:[30,1],noise:0.01},
  {n:'地形性対流 — 山に当たる湿った風',mode:0,env:{sfcT:28,lapse:7.2,tropo:12000,strat:1.0,rhSfc:0.85,rhTop:0.3,invZ:0,invDT:0,layers:[{z0:0,z1:2000,rh:0.85}]},terrain:{mountains:[{x:0.55,h:1800,w:5500}],sea:[[0,0.28]],landMat:2,rough:60},mats:[[0,26,1],[2,31,0.45]],streams:[{side:-1,z0:0,z1:16000,u:6,dT:0,rh:-1}],micro:{radTop:1.0},sun:[45,-1],noise:0.03},
  {n:'巻雲 — 上層ジェットと氷晶の落下筋',mode:0,env:{sfcT:15,lapse:6.5,tropo:11500,strat:1.0,rhSfc:0.4,rhTop:0.2,invZ:0,invDT:0,layers:[{z0:8200,z1:11000,rh:0.84}]},terrain:{landMat:1,rough:50},mats:[[1,20,0.3]],streams:[{side:-1,z0:0,z1:6000,u:8,dT:0,rh:-1},{side:-1,z0:6000,z1:12500,u:34,dT:0,rh:-1}],micro:{radTop:1.0},sun:[18,1],noise:0.01},
@@ -1059,11 +1061,11 @@ function buildUI(){
 
  // ---- 気流
  const W=$('#tab-wind');W.innerHTML='';s=sec(W,'気流 (側面境界からの流入をナッジング)');
- note(s,'各気流は流入側の境界付近で速度・温度偏差・湿度を目標値へ緩和する。西風 (u>0) は左から、東風 (u<0) は右から流入。同じ高度に両側の気流を置くと領域中央で衝突し前線になる。ΔT は基本場からの偏差で、気流の上半分で 0 へ滑らかに減衰する (上端に人工的な超断熱層を作らないため)。暖気を全層で入れたいときは上端を 16000 m にする。RH に −1 を入れると基本場の湿度を使う。初期化時は領域全体に気流を敷く。');
+ note(s,'各気流は流入側の境界付近で速度・温度偏差・湿度を目標値へ緩和する。風速は正の値で入力し、向きは流入側で決まる (西=左から右へ、東=右から左へ)。同じ高度に両側の気流を置くと領域中央で衝突し前線になる。ΔT は基本場からの偏差で、気流の上半分で 0 へ滑らかに減衰する (上端に人工的な超断熱層を作らないため)。暖気を全層で入れたいときは上端を 16000 m にする。RH に −1 を入れると基本場の湿度を使う。初期化時は領域全体に気流を敷く。');
  const SW=el('div');s.appendChild(SW);
- function drawStreams(){SW.innerHTML='';S.streams.forEach((st,idx)=>{const c=el('div',{class:'card'});c.appendChild(el('div',{class:'hd'},`<b>気流 ${idx+1}</b><span class="chip">${st.side<0?'← 西から (左)':'東から (右) →'}</span><button class="x" data-i="${idx}">✕</button>`));
+ function drawStreams(){SW.innerHTML='';S.streams.forEach((st,idx)=>{const c=el('div',{class:'card'});c.appendChild(el('div',{class:'hd'},`<b>気流 ${idx+1}</b><span class="chip">${st.side<0?'西から (左) →':'← 東から (右)'}</span><button class="x" data-i="${idx}">✕</button>`));
    select(c,{label:'流入側',opts:[[-1,'西 (左境界)'],[1,'東 (右境界)']],val:st.side,on:v=>{st.side=+v;drawStreams();}});
-   const g=el('div',{class:'grid2'});c.appendChild(g);const a=el('div');numin(a,'下端 m',st.z0,v=>st.z0=v,100);const b=el('div');numin(b,'上端 m',st.z1,v=>st.z1=v,100);const d=el('div');numin(d,'u m/s',st.u,v=>st.u=v,0.5);const e=el('div');numin(e,'ΔT K',st.dT,v=>st.dT=v,0.5);const f=el('div');numin(f,'RH (0-1, −1=基本場)',st.rh,v=>st.rh=v,0.01);g.appendChild(a);g.appendChild(b);g.appendChild(d);g.appendChild(e);g.appendChild(f);
+   const g=el('div',{class:'grid2'});c.appendChild(g);const a=el('div');numin(a,'下端 m',st.z0,v=>st.z0=v,100);const b=el('div');numin(b,'上端 m',st.z1,v=>st.z1=v,100);const d=el('div');numin(d,'風速 m/s (正の値)',Math.abs(st.u),v=>st.u=Math.abs(v),0.5);const e=el('div');numin(e,'ΔT K',st.dT,v=>st.dT=v,0.5);const f=el('div');numin(f,'RH (0-1, −1=基本場)',st.rh,v=>st.rh=v,0.01);g.appendChild(a);g.appendChild(b);g.appendChild(d);g.appendChild(e);g.appendChild(f);
    SW.appendChild(c);c.querySelector('.x').addEventListener('click',()=>{S.streams.splice(idx,1);drawStreams();});});}
  drawStreams();const addS=el('button',null,'+ 気流を追加');addS.addEventListener('click',()=>{S.streams.push({side:-1,z0:0,z1:3000,u:8,dT:0,rh:-1});drawStreams();});s.appendChild(addS);
  s=sec(W,'側面境界条件');
@@ -1189,7 +1191,7 @@ function updateCond(){const e=S.env,f=(v,d=1)=>(+v).toFixed(d);const rows=[];
  rows.push(['湿度',`地上 ${f(e.rhSfc*100,0)} % → 圏界面 ${f(e.rhTop*100,0)} %`+(e.layers.length?' · 湿潤層 '+e.layers.map(L=>`${f(L.z0/1000)}–${f(L.z1/1000)} km ${f(L.rh*100,0)} %`).join(', '):'')]);
  const lat=['開放 (吸収層 '+f(S.num.latW/1000)+' km)','周期','閉鎖 (壁)'][S.lat];
  rows.push(['境界',lat+' · 上端スポンジ '+f(S.num.spH*100,0)+' %']);
- if(S.streams.length)rows.push([S.lat===1?'初期風':'気流',S.streams.map(st=>`${st.side<0?'←西':'東→'} ${f(st.z0/1000)}–${f(st.z1/1000)} km u ${f(st.u)} m/s`+(st.dT?` ΔT ${st.dT>0?'+':''}${f(st.dT)} K`:'')+(st.rh>=0?` RH ${f(st.rh*100,0)} %`:'')).join(' | ')]);else rows.push(['気流','なし (静穏)']);
+ if(S.streams.length)rows.push([S.lat===1?'初期風':'気流',S.streams.map(st=>`${st.side<0?'西→':'←東'} ${f(st.z0/1000)}–${f(st.z1/1000)} km ${f(Math.abs(st.u))} m/s`+(st.dT?` ΔT ${st.dT>0?'+':''}${f(st.dT)} K`:'')+(st.rh>=0?` RH ${f(st.rh*100,0)} %`:'')).join(' | ')]);else rows.push(['気流','なし (静穏)']);
  if(terrM){const cnt={};for(let i=0;i<S.nx;i++)cnt[terrM[i]]=(cnt[terrM[i]]||0)+1;rows.push(['地表',Object.keys(cnt).map(k=>`${MATS[k].n} ${f(MATS[k].T)} °C β${f(MATS[k].b,2)} (${f(cnt[k]/S.nx*100,0)} %)`).join(' · ')]);}
  const m=S.micro;rows.push(['物理',`暖かい雨 ${m.warm?'ON':'OFF'} · 氷相 ${m.ice?'ON':'OFF'} · 雲頂冷却 ${f(m.radTop,2)} K/h · 晴天冷却 ${f(m.radClr)} K/day · C_s ${f(S.num.cs,2)}`]);
  rows.push(['格子',`${S.nx}×${S.nz} · Δ ${f(S.dx,0)} m · Δt ${f(S.dt,2)} s × ${S.substeps}/frame`]);
@@ -1307,6 +1309,7 @@ function autotest(pi){applyPreset(PRESETS[pi]);const Q=new URLSearchParams(locat
    let colTop=0,colTopMax=[0,0,0,0];{for(let i=0;i<S.nx;i++){let run=0;for(let k=S.nz-2;k>=0;k--){const o=(k*S.nx+i)*4;const q=obsBuf[o]+obsBuf[o+1]+obsBuf[o+2]+obsBuf[o+3];if(q>1e-7){run++;for(let j=0;j<4;j++)colTopMax[j]=Math.max(colTopMax[j],obsBuf[o+j]);}else break;}if(run>S.nz*0.25)colTop++;}}
    let qsAt=null,qsm=0,prof=[];{for(let k=0;k<S.nz;k++)for(let i=0;i<S.nx;i++){const o=(k*S.nx+i)*4;if(obsBuf[o+3]>qsm){qsm=obsBuf[o+3];qsAt=[+(i*S.dx/1000).toFixed(1),+(k*S.dx/1000).toFixed(2),+(obsVel[o+1]).toFixed(2)];}}
     for(let k=S.nz-1;k>=S.nz-12;k--){let m=0,mq=0,mw=0;for(let i=0;i<S.nx;i++){const o=(k*S.nx+i)*4;m=Math.max(m,obsBuf[o+3]);mw=Math.max(mw,Math.abs(obsVel[o+1]));}prof.push([k,+(m*1e3).toFixed(2),+mw.toFixed(2)]);}}
+   let uMean=0,nU=0;for(let k=0;k<S.nz;k++)for(let i=0;i<S.nx;i++){const o=(k*S.nx+i)*4;if(obsVel[o]!==0){uMean+=obsVel[o];nU++;}}uMean/=Math.max(1,nU);
    let hiCols=0,hiMax=[0,0,0,0];{const k0=Math.floor(12000/S.dx);for(let i=0;i<S.nx;i++){let any=false;for(let k=k0;k<S.nz;k++){const o=(k*S.nx+i)*4;const q=obsBuf[o]+obsBuf[o+1]+obsBuf[o+2]+obsBuf[o+3];if(q>1e-7){any=true;for(let j=0;j<4;j++)hiMax[j]=Math.max(hiMax[j],obsBuf[o+j]);}}if(any)hiCols++;}}
    const thB=new Float32Array(S.nx*S.nz*4);gl.bindFramebuffer(gl.FRAMEBUFFER,fboFor([T.thA]));gl.readPixels(0,0,S.nx,S.nz,gl.RGBA,gl.FLOAT,thB);let dthMax=-1e9,dthMin=1e9,rhMax=0;
    for(let k=0;k<S.nz;k++){const th0=baseRow0[k*4],pi0=baseRow0[k*4+2];const p=p00*Math.pow(pi0,3.5);for(let i=0;i<S.nx;i++){const o=(k*S.nx+i)*4;if(obsBuf[o]===0&&obsVel[o]===0&&obsVel[o+1]===0&&thB[o]===th0)continue;const d=thB[o]-th0;if(d>dthMax)dthMax=d;if(d<dthMin)dthMin=d;const rh=thB[o+1]/qsat(esw(thB[o]*pi0),p);if(rh>rhMax)rhMax=rh;}}
@@ -1315,7 +1318,7 @@ function autotest(pi){applyPreset(PRESETS[pi]);const Q=new URLSearchParams(locat
    let divMax=0,divRms=0,nI=0;for(let k=1;k<S.nz-1;k++)for(let i=1;i<S.nx-1;i++){const o=(k*S.nx+i)*4;if(mB[o]>0.5||mB[o-4]>0.5||mB[o+4]>0.5||mB[o-S.nx*4]>0.5||mB[o+S.nx*4]>0.5)continue;const d=Math.abs(divB[o])/baseRow0[k*4+1];divMax=Math.max(divMax,d);divRms+=d*d;nI++;}divRms=Math.sqrt(divRms/Math.max(1,nI));
    let loc={};{let a=-1e9,b=1e9;for(let k=0;k<S.nz;k++){const th0=baseRow0[k*4];for(let i=0;i<S.nx;i++){const o=(k*S.nx+i)*4;if(mB[o]>0.5)continue;const d=thB[o]-th0;if(d>a){a=d;loc.thMaxAt=[+(i*S.dx/1000).toFixed(1),+(k*S.dx/1000).toFixed(1)];}if(d<b){b=d;loc.thMinAt=[+(i*S.dx/1000).toFixed(1),+(k*S.dx/1000).toFixed(1)];}}}
     let wm=0;for(let k=0;k<S.nz;k++)for(let i=0;i<S.nx;i++){const o=(k*S.nx+i)*4;if(Math.abs(obsVel[o+1])>wm){wm=Math.abs(obsVel[o+1]);loc.wMaxAt=[+(i*S.dx/1000).toFixed(1),+(k*S.dx/1000).toFixed(1)];}}}
-   console.log('AUTOTEST '+JSON.stringify({preset:PRESETS[pi].n,steps:n,simMin:S.time/60,grid:[S.nx,S.nz],cls:$('#obsCls').textContent,obs:$('#obsG').innerText.replace(/\n/g,' | '),qcmax,qrmax,qimax,vmax,qsAt,prof,colTop,colTopMax,hiCols,hiMax,dthMax,dthMin,rhMax,divMax,divRms,loc,nan,ms:(performance.now()-t0)/25}));document.title='DONE';}}
+   console.log('AUTOTEST '+JSON.stringify({preset:PRESETS[pi].n,steps:n,simMin:S.time/60,grid:[S.nx,S.nz],cls:$('#obsCls').textContent,obs:$('#obsG').innerText.replace(/\n/g,' | '),qcmax,qrmax,qimax,vmax,uMean,qsAt,prof,colTop,colTopMax,hiCols,hiMax,dthMax,dthMin,rhMax,divMax,divRms,loc,nan,ms:(performance.now()-t0)/25}));document.title='DONE';}}
  chunk();}
 setTimeout(boot,50);
 </script>
