@@ -630,7 +630,6 @@ void main(){vec2 px=gl_FragCoord.xy;vec2 uv=(px-uRect.xy)/uRect.zw;vec3 bgc=vec3
    vec3 zen=mix(vec3(0.010,0.016,0.045),vec3(0.14,0.34,0.72),smoothstep(-0.18,0.32,e));
    vec3 hor=mix(vec3(0.05,0.05,0.10),mix(vec3(0.98,0.58,0.36),vec3(0.70,0.81,0.92),smoothstep(0.0,0.38,e)),smoothstep(-0.22,0.06,e));
    vec3 sky=mix(hor,zen,pow(zf,0.55));
-   if(e<0.05){vec2 sp=floor(px*0.7);float st=h21i(sp);float tw=0.6+0.4*sin(uTime*2.+h21i(sp+3.1)*40.);sky+=vec3(0.9,0.95,1.)*step(0.9975,st)*tw*(1.-day)*0.8*zf;}
    col=sky;
    vec4 H=sampM(uHy,pc,vec4(0));float qc=H.x,qr=H.y,qi=H.z,qs=H.w;
    float sumq=qc+qr+qi+qs;
@@ -669,7 +668,7 @@ void main(){vec2 px=gl_FragCoord.xy;vec2 uv=(px-uRect.xy)/uRect.zw;vec3 bgc=vec3
  if(uArt>0.5){
   float e=uSun.x;float day=smoothstep(-0.12,0.12,e);
   if(uv0.y>1.){float t=clamp((uv0.y-1.)*1.5,0.,1.);vec3 zen=mix(vec3(0.010,0.016,0.045),vec3(0.14,0.34,0.72),smoothstep(-0.18,0.32,e));col=mix(col,zen*0.55,t);
-   if(e<0.05){vec2 sp=floor(px*0.7);float st=h21i(sp);float tw=0.6+0.4*sin(uTime*2.+h21i(sp+3.1)*40.);col+=vec3(0.9,0.95,1.)*step(0.9975,st)*tw*(1.-day)*0.8;}}
+}
   if(uv0.y<0.){float t=clamp(-uv0.y*3.,0.,1.);col=mix(col,col*0.35,t);}
   vec2 vv=(px/uCanvas-0.5)*vec2(1.,1.15);float vig=1.-0.38*smoothstep(0.35,0.95,length(vv)*1.35);col*=vig;
   col+=(h21i(px+fract(uTime*0.1)*13.)-0.5)*0.018;
