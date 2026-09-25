@@ -315,7 +315,10 @@ void main(){ivec2 c=ivec2(gl_FragCoord.xy);vec2 p=vec2(c)+0.5;vec4 cur=F(uSrc,c)
  if(uKind==0){o=sampZ(uSrc,depart(p,0.));}
  else if(uKind==1){o=sampM(uSrc,depart(p,0.),cur);}
  else{vec4 fl=F(uFallT,c);vec4 r;
-  for(int j=0;j<4;j++){r[j]=sampM(uSrc,depart(p,fl[j]),cur)[j];}o=r;}}`;
+  // 落下物質の出発点が蓋 (上端) の上なら、そこに水物質は無いので 0 を返す。
+  // WHY: 以前は sampM の fallback で自セル値を返していたため、最上段の雪が下へ落ちつつ自分も残り (= 蓋で雪が無限に湧く)、
+  //      雲頂が上端に達すると蓋から下向きの雪の柱が出た (2026-09-25 user 報告「宇宙へ伸びる柱」)。戻すな。
+  for(int j=0;j<4;j++){vec2 d=depart(p,fl[j]);r[j]=(uMode==0&&d.y>float(uN.y))?0.:sampM(uSrc,d,cur)[j];}o=r;}}`;
 
 // --- MacCormack combine with local clamp
 const FS_MC=PRE+`
@@ -328,7 +331,7 @@ void mm(vec2 d,int j,inout float mn,inout float mx){vec2 q=d-0.5;ivec2 i=ivec2(f
 void main(){ivec2 c=ivec2(gl_FragCoord.xy);vec2 p=vec2(c)+0.5;vec4 phi=F(uPhi,c),hat=F(uHat,c),bar=F(uBar,c);
  if(solid(c)){o=(uKind==0)?vec4(0.):phi;return;}
  vec4 r=hat+0.5*(phi-bar);vec4 fl=(uKind==2)?F(uFallT,c):vec4(0.);
- for(int j=0;j<4;j++){float mn=1e30,mx=-1e30;mm(depart(p,fl[j]),j,mn,mx);if(mn>mx){mn=phi[j];mx=phi[j];}r[j]=clamp(r[j],mn,mx);}
+ for(int j=0;j<4;j++){vec2 d=depart(p,fl[j]);if(uKind==2&&uMode==0&&d.y>float(uN.y)){r[j]=0.;continue;}float mn=1e30,mx=-1e30;mm(d,j,mn,mx);if(mn>mx){mn=phi[j];mx=phi[j];}r[j]=clamp(r[j],mn,mx);}
  o=r;}`;
 
 // --- forces: diffusion, buoyancy, surface fluxes, nudging, sponge, radiation  (MRT: vel, thermo)
@@ -1293,9 +1296,13 @@ function autotest(pi){applyPreset(PRESETS[pi]);const Q=new URLSearchParams(locat
   const lv=T.mg.map(L=>{const b=new Float32Array(L.w*L.h*4);gl.bindFramebuffer(gl.FRAMEBUFFER,fboFor([L.mask]));gl.readPixels(0,0,L.w,L.h,gl.RGBA,gl.FLOAT,b);let sol=0;for(let i=0;i<b.length;i+=4)sol+=b[i];return [L.w,L.h,sol];});
   console.log('AUTOTEST '+JSON.stringify({mgtest:res,levels:lv}));document.title='DONE';return;}
  if(Q.get('composite'))$('#vbComposite').click();if(Q.get('art')){toggleArt();S.playing=false;S.artDiurnal=false;S.view.sunElev=+Q.get('art');}if(Q.get('sun'))S.view.sunElev=+Q.get('sun');if(Q.get('tool')){document.querySelector('#tools button[data-tool='+Q.get('tool')+']').click();}
- function chunk(){const t0=performance.now();for(let i=0;i<25&&n<total;i++){step();n++;}render();
+ const bub=+(Q.get('bubbles')||0);const bubZ=+(Q.get('bubz')||8000);let rs=7;const rnd=()=>{rs=(rs*1664525+1013904223)>>>0;return rs/4294967296;};
+ function chunk(){const t0=performance.now();for(let i=0;i<25&&n<total;i++){if(bub&&n%bub===0)bubble(S.Lx*(0.15+0.7*rnd()),200+bubZ*rnd(),3,1500);step();n++;}render();
   if(n<total){setTimeout(chunk,0);}else{observe();let nan=0,qcmax=0,qimax=0,qrmax=0;for(let i=0;i<obsBuf.length;i++){if(Number.isNaN(obsBuf[i]))nan++;}for(let i=0;i<obsBuf.length;i+=4){qcmax=Math.max(qcmax,obsBuf[i]);qrmax=Math.max(qrmax,obsBuf[i+1]);qimax=Math.max(qimax,obsBuf[i+2]);}
    let vmax=0;for(let i=0;i<obsVel.length;i+=4){vmax=Math.max(vmax,Math.hypot(obsVel[i],obsVel[i+1]));}
+   let colTop=0,colTopMax=[0,0,0,0];{for(let i=0;i<S.nx;i++){let run=0;for(let k=S.nz-2;k>=0;k--){const o=(k*S.nx+i)*4;const q=obsBuf[o]+obsBuf[o+1]+obsBuf[o+2]+obsBuf[o+3];if(q>1e-7){run++;for(let j=0;j<4;j++)colTopMax[j]=Math.max(colTopMax[j],obsBuf[o+j]);}else break;}if(run>S.nz*0.25)colTop++;}}
+   let qsAt=null,qsm=0,prof=[];{for(let k=0;k<S.nz;k++)for(let i=0;i<S.nx;i++){const o=(k*S.nx+i)*4;if(obsBuf[o+3]>qsm){qsm=obsBuf[o+3];qsAt=[+(i*S.dx/1000).toFixed(1),+(k*S.dx/1000).toFixed(2),+(obsVel[o+1]).toFixed(2)];}}
+    for(let k=S.nz-1;k>=S.nz-12;k--){let m=0,mq=0,mw=0;for(let i=0;i<S.nx;i++){const o=(k*S.nx+i)*4;m=Math.max(m,obsBuf[o+3]);mw=Math.max(mw,Math.abs(obsVel[o+1]));}prof.push([k,+(m*1e3).toFixed(2),+mw.toFixed(2)]);}}
    let hiCols=0,hiMax=[0,0,0,0];{const k0=Math.floor(12000/S.dx);for(let i=0;i<S.nx;i++){let any=false;for(let k=k0;k<S.nz;k++){const o=(k*S.nx+i)*4;const q=obsBuf[o]+obsBuf[o+1]+obsBuf[o+2]+obsBuf[o+3];if(q>1e-7){any=true;for(let j=0;j<4;j++)hiMax[j]=Math.max(hiMax[j],obsBuf[o+j]);}}if(any)hiCols++;}}
    const thB=new Float32Array(S.nx*S.nz*4);gl.bindFramebuffer(gl.FRAMEBUFFER,fboFor([T.thA]));gl.readPixels(0,0,S.nx,S.nz,gl.RGBA,gl.FLOAT,thB);let dthMax=-1e9,dthMin=1e9,rhMax=0;
    for(let k=0;k<S.nz;k++){const th0=baseRow0[k*4],pi0=baseRow0[k*4+2];const p=p00*Math.pow(pi0,3.5);for(let i=0;i<S.nx;i++){const o=(k*S.nx+i)*4;if(obsBuf[o]===0&&obsVel[o]===0&&obsVel[o+1]===0&&thB[o]===th0)continue;const d=thB[o]-th0;if(d>dthMax)dthMax=d;if(d<dthMin)dthMin=d;const rh=thB[o+1]/qsat(esw(thB[o]*pi0),p);if(rh>rhMax)rhMax=rh;}}
@@ -1304,7 +1311,7 @@ function autotest(pi){applyPreset(PRESETS[pi]);const Q=new URLSearchParams(locat
    let divMax=0,divRms=0,nI=0;for(let k=1;k<S.nz-1;k++)for(let i=1;i<S.nx-1;i++){const o=(k*S.nx+i)*4;if(mB[o]>0.5||mB[o-4]>0.5||mB[o+4]>0.5||mB[o-S.nx*4]>0.5||mB[o+S.nx*4]>0.5)continue;const d=Math.abs(divB[o])/baseRow0[k*4+1];divMax=Math.max(divMax,d);divRms+=d*d;nI++;}divRms=Math.sqrt(divRms/Math.max(1,nI));
    let loc={};{let a=-1e9,b=1e9;for(let k=0;k<S.nz;k++){const th0=baseRow0[k*4];for(let i=0;i<S.nx;i++){const o=(k*S.nx+i)*4;if(mB[o]>0.5)continue;const d=thB[o]-th0;if(d>a){a=d;loc.thMaxAt=[+(i*S.dx/1000).toFixed(1),+(k*S.dx/1000).toFixed(1)];}if(d<b){b=d;loc.thMinAt=[+(i*S.dx/1000).toFixed(1),+(k*S.dx/1000).toFixed(1)];}}}
     let wm=0;for(let k=0;k<S.nz;k++)for(let i=0;i<S.nx;i++){const o=(k*S.nx+i)*4;if(Math.abs(obsVel[o+1])>wm){wm=Math.abs(obsVel[o+1]);loc.wMaxAt=[+(i*S.dx/1000).toFixed(1),+(k*S.dx/1000).toFixed(1)];}}}
-   console.log('AUTOTEST '+JSON.stringify({preset:PRESETS[pi].n,steps:n,simMin:S.time/60,grid:[S.nx,S.nz],cls:$('#obsCls').textContent,obs:$('#obsG').innerText.replace(/\n/g,' | '),qcmax,qrmax,qimax,vmax,hiCols,hiMax,dthMax,dthMin,rhMax,divMax,divRms,loc,nan,ms:(performance.now()-t0)/25}));document.title='DONE';}}
+   console.log('AUTOTEST '+JSON.stringify({preset:PRESETS[pi].n,steps:n,simMin:S.time/60,grid:[S.nx,S.nz],cls:$('#obsCls').textContent,obs:$('#obsG').innerText.replace(/\n/g,' | '),qcmax,qrmax,qimax,vmax,qsAt,prof,colTop,colTopMax,hiCols,hiMax,dthMax,dthMin,rhMax,divMax,divRms,loc,nan,ms:(performance.now()-t0)/25}));document.title='DONE';}}
  chunk();}
 setTimeout(boot,50);
 </script>
