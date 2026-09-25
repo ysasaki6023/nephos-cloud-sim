@@ -1,0 +1,1303 @@
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Nephos</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Shippori+Mincho+B1:wght@500;700&family=Zen+Kaku+Gothic+New:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+:root{
+  color-scheme:dark;
+  --bg:#070b14; --panel:rgba(12,18,32,0.88); --panel2:#111a2c; --line:rgba(150,180,220,0.14); --line2:rgba(150,180,220,0.28);
+  --text:#dfe7f3; --muted:#8ea0bb; --dim:#5d6c85; --accent:#8fd3ff; --accent2:#f2b46b; --warn:#ff7a6b; --ok:#7fe0b0;
+  --mono:'IBM Plex Mono',ui-monospace,Menlo,monospace;
+  --ui:'Zen Kaku Gothic New','Hiragino Sans','Noto Sans JP',system-ui,sans-serif;
+  --disp:'Shippori Mincho B1','Hiragino Mincho ProN','Yu Mincho',serif;
+  --topH:52px; --panelW:352px;
+}
+html,body{height:100%;margin:0;background:var(--bg);color:var(--text);font-family:var(--ui);font-size:13px;overflow:hidden;-webkit-font-smoothing:antialiased}
+*{box-sizing:border-box}
+#gl,#hud{position:absolute;inset:0;width:100%;height:100%;display:block}
+#hud{pointer-events:none}
+#gl{cursor:crosshair}
+button,select,input{font-family:inherit;font-size:inherit;color:inherit}
+button{background:rgba(143,211,255,0.08);border:1px solid var(--line2);border-radius:6px;padding:5px 10px;cursor:pointer;transition:background .15s,border-color .15s}
+button:hover{background:rgba(143,211,255,0.16)}
+button:focus-visible,select:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+button.primary{background:rgba(143,211,255,0.18);border-color:var(--accent)}
+button.on{background:rgba(242,180,107,0.22);border-color:var(--accent2);color:#ffe2b8}
+select{background:#0e1626;border:1px solid var(--line2);border-radius:6px;padding:5px 8px}
+input[type=number]{background:#0e1626;border:1px solid var(--line2);border-radius:6px;padding:4px 6px;width:72px;font-family:var(--mono);font-size:12px}
+input[type=range]{width:100%;accent-color:var(--accent);margin:2px 0 0}
+input[type=checkbox]{accent-color:var(--accent2)}
+.mono{font-family:var(--mono);font-variant-numeric:tabular-nums}
+
+#top{position:absolute;left:0;right:0;top:0;height:var(--topH);padding:0 14px;padding-top:env(safe-area-inset-top,0px);display:flex;align-items:center;gap:14px;background:linear-gradient(180deg,rgba(7,11,20,0.92),rgba(7,11,20,0.55) 80%,transparent);z-index:5}
+#brand{display:flex;align-items:baseline;gap:10px;min-width:0}
+#brand h1{font-family:var(--disp);font-weight:500;font-size:22px;letter-spacing:.06em;margin:0;color:#f3f6fb}
+#brand small{color:var(--muted);letter-spacing:.14em;font-size:10.5px;text-transform:uppercase;white-space:nowrap}
+#top .grow{flex:1}
+#clock{font-family:var(--mono);font-size:14px;letter-spacing:.04em;color:#f3f6fb;white-space:nowrap}
+#clock span{color:var(--muted);font-size:11px;margin-left:8px}
+.tbtn{display:flex;gap:6px;align-items:center}
+.stat{font-family:var(--mono);font-size:11px;color:var(--muted);white-space:nowrap}
+
+#panel{position:absolute;right:0;top:0;bottom:0;width:var(--panelW);padding-top:calc(var(--topH) + env(safe-area-inset-top,0px));background:var(--panel);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border-left:1px solid var(--line);display:flex;flex-direction:column;z-index:4;transition:transform .25s ease}
+#panel.hidden{transform:translateX(100%)}
+#tabs{display:flex;flex-wrap:wrap;gap:2px;padding:6px 8px 0;border-bottom:1px solid var(--line)}
+#tabs button{border:none;background:transparent;border-radius:6px 6px 0 0;padding:6px 8px;font-size:12px;color:var(--muted);border-bottom:2px solid transparent}
+#tabs button.on{color:var(--text);background:rgba(143,211,255,0.08);border-bottom-color:var(--accent)}
+#tabbody{flex:1;overflow-y:auto;padding:10px 14px 24px;scrollbar-width:thin}
+.tab{display:none}.tab.on{display:block}
+.sec{margin:0 0 16px}
+.sec h3{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin:0 0 8px;font-weight:500;display:flex;align-items:center;gap:8px}
+.sec h3::after{content:"";flex:1;height:1px;background:var(--line)}
+.row{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:0 0 6px}
+.row label{color:var(--text)}
+.row .v{font-family:var(--mono);font-size:12px;color:var(--accent);min-width:56px;text-align:right}
+.ctl{margin:0 0 10px}
+.ctl .row{margin-bottom:0}
+.note{color:var(--muted);font-size:11.5px;line-height:1.55;margin:4px 0 8px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:6px 10px}
+.grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px}
+.chip{display:inline-block;padding:2px 7px;border-radius:999px;border:1px solid var(--line2);font-size:11px;color:var(--muted);font-family:var(--mono)}
+.card{border:1px solid var(--line);border-radius:8px;padding:8px 10px;margin:0 0 8px;background:rgba(255,255,255,0.02)}
+.card .hd{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px}
+.card .hd b{font-weight:500}
+.x{background:transparent;border:none;color:var(--muted);padding:2px 6px}
+.x:hover{color:var(--warn);background:transparent}
+.btns{display:flex;flex-wrap:wrap;gap:6px}
+.btns button{font-size:12px;padding:4px 9px}
+.mat{display:grid;grid-template-columns:auto 1fr 1fr;gap:4px 8px;align-items:center;font-size:12px}
+.mat .sw{width:12px;height:12px;border-radius:3px;display:inline-block;margin-right:6px;vertical-align:-1px}
+.mat input[type=number]{width:64px}
+
+#stack{position:absolute;left:64px;right:calc(var(--panelW) + 12px);top:calc(var(--topH) + 6px + env(safe-area-inset-top,0px));display:flex;flex-direction:column;gap:6px;z-index:4;transition:right .25s ease;pointer-events:none}
+#stack.wide{right:12px}
+#stack>*{pointer-events:auto}
+#row2{display:flex;gap:10px;align-items:flex-start;flex-wrap:wrap}
+#toolhint{flex:1 1 320px;min-width:260px;background:var(--panel);border:1px solid var(--accent2);border-radius:8px;padding:6px 10px;font-size:12px;line-height:1.5;display:flex;flex-wrap:wrap;gap:4px 14px;align-items:center}
+#toolhint b{color:#ffe2b8;font-weight:500}
+#toolhint .mini{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--muted)}
+#toolhint .mini input[type=range]{width:90px;margin:0}
+#toolhint .mini .v{font-family:var(--mono);color:var(--accent);min-width:52px}
+#viewbar{display:flex;flex-wrap:wrap;gap:6px;align-items:center;background:var(--panel);border:1px solid var(--line2);border-radius:8px;padding:6px 10px;font-size:12px}
+#viewbar label{display:flex;align-items:center;gap:4px;color:var(--muted)}
+#viewbar select{padding:3px 6px;font-size:12px;max-width:150px}
+#viewbar button{padding:3px 9px;font-size:12px}
+#cond{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:6px 10px;font-size:11px;align-self:flex-start;max-width:100%}
+#cond .hd{display:flex;justify-content:space-between;align-items:center;font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+#cond.min #condBody{display:none}
+#condBody{display:grid;grid-template-columns:auto 1fr;gap:1px 10px;font-size:11px;line-height:1.5;margin-top:4px}
+#condBody .k{color:var(--accent2)}
+#tools{position:absolute;left:12px;top:calc(var(--topH) + 10px + env(safe-area-inset-top,0px));display:flex;flex-direction:column;gap:4px;z-index:4}
+#tools button{width:40px;height:40px;padding:0;border-radius:8px;background:var(--panel);backdrop-filter:blur(10px);display:flex;align-items:center;justify-content:center;font-size:11px;letter-spacing:.02em}
+#tools button.on{background:rgba(242,180,107,0.25);border-color:var(--accent2)}
+#tools .lbl{font-size:10px;color:var(--muted);text-align:center;margin-top:2px}
+
+#readout{position:absolute;left:12px;bottom:12px;padding-bottom:env(safe-area-inset-bottom,0px);z-index:3;pointer-events:none;display:flex;flex-direction:column;gap:6px;max-width:calc(100vw - 24px)}
+#cursor{font-family:var(--mono);font-size:11px;color:var(--text);background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:8px 10px;display:grid;grid-template-columns:auto auto auto auto;gap:2px 14px;min-width:240px}
+#cursor .k{color:var(--muted)}
+#legend{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:6px 10px;display:none;align-items:center;gap:10px;font-family:var(--mono);font-size:11px}
+#legend canvas{width:140px;height:10px;border-radius:2px}
+#legend.on{display:flex}
+
+#obs{position:absolute;right:calc(var(--panelW) + 12px);bottom:12px;z-index:3;background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:8px 12px;font-size:11.5px;min-width:230px;transition:right .25s ease;cursor:pointer;user-select:none}
+#obs.min .g{display:none}#obs.min{min-width:0}
+#obs.wide{right:12px}
+#obs .t{font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin-bottom:4px}
+#obs .cls{font-family:var(--disp);font-size:17px;color:#f3f6fb;margin:0 0 6px}
+#obs .g{display:grid;grid-template-columns:auto auto;gap:1px 12px;font-family:var(--mono)}
+#obs .g .k{color:var(--muted)}
+
+#tracer{position:absolute;left:12px;top:calc(var(--topH) + 250px + env(safe-area-inset-top,0px));z-index:3;background:var(--panel);border:1px solid var(--accent2);border-radius:8px;padding:8px 12px;font-size:11.5px;min-width:220px;display:none}
+#tracer.on{display:block}
+#tracer .t{font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--accent2);margin-bottom:4px}
+#tracer .g{display:grid;grid-template-columns:auto auto;gap:1px 12px;font-family:var(--mono)}
+#tracer .g .k{color:var(--muted)}
+#spark{width:200px;height:60px;display:block;margin-top:6px}
+
+#splash{position:absolute;inset:0;background:var(--bg);z-index:20;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:12px;transition:opacity .5s}
+#splash h1{font-family:var(--disp);font-weight:500;font-size:40px;letter-spacing:.12em;margin:0;color:#f3f6fb}
+#splash p{color:var(--muted);font-family:var(--mono);font-size:12px;margin:0}
+#err{position:absolute;left:12px;right:12px;top:70px;z-index:30;background:#2a0f12;border:1px solid var(--warn);border-radius:8px;padding:10px 14px;font-family:var(--mono);font-size:11px;white-space:pre-wrap;display:none;max-height:60vh;overflow:auto}
+#modal{position:absolute;inset:0;z-index:25;background:rgba(3,6,12,0.7);display:none;align-items:center;justify-content:center;padding:20px}
+#modal.on{display:flex}
+#modal .box{background:var(--panel2);border:1px solid var(--line2);border-radius:12px;max-width:760px;width:100%;max-height:88vh;overflow:auto;padding:22px 26px;line-height:1.7}
+#modal h2{font-family:var(--disp);font-weight:500;letter-spacing:.06em;margin:0 0 10px;font-size:22px}
+#modal h4{margin:16px 0 4px;font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--accent)}
+#modal p{margin:0 0 6px;max-width:66ch}
+#modal .eq{font-family:var(--mono);font-size:12.5px;background:rgba(0,0,0,0.3);border-radius:6px;padding:8px 12px;margin:6px 0;overflow-x:auto;white-space:pre}
+#modal .close{float:right}
+#panelToggle{display:none}
+body.art #panel,body.art #tools,body.art #stack,body.art #obs,body.art #readout,body.art #tracer{display:none!important}
+body.art #top{opacity:0;transition:opacity .4s}body.art #top:hover{opacity:1}
+body.art #gl{cursor:none}body.art #top:hover~#gl{cursor:default}
+#artCap{position:absolute;left:28px;bottom:24px;z-index:3;pointer-events:none;display:none;color:rgba(230,236,246,0.72);font-family:var(--disp);font-size:15px;letter-spacing:.08em;text-shadow:0 1px 6px rgba(0,0,0,0.6)}
+#artCap small{display:block;font-family:var(--mono);font-size:10.5px;letter-spacing:.12em;color:rgba(200,214,235,0.6);margin-top:4px}
+body.art #artCap{display:block}
+kbd{font-family:var(--mono);font-size:10.5px;border:1px solid var(--line2);border-radius:4px;padding:0 4px;color:var(--muted)}
+
+@media (max-width:820px){
+  #stack{display:none}
+  :root{--panelW:100vw}
+  #panel{top:auto;height:52vh;width:100%;padding-top:0;border-left:none;border-top:1px solid var(--line2);transform:translateY(0)}
+  #panel.hidden{transform:translateY(100%)}
+  #obs{right:12px;bottom:calc(52vh + 12px)}
+  #obs.wide{bottom:12px}
+  #readout{display:none}
+  #brand small{display:none}
+  #panelToggle{display:inline-block}
+  .stat{display:none}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+
+<div id="splash"><h1>Nephos</h1><p id="splashMsg">GPU を計測しています…</p></div>
+<div id="err"></div>
+<canvas id="gl"></canvas>
+<canvas id="hud"></canvas>
+
+<div id="top">
+  <div id="brand"><h1>Nephos</h1><small>anelastic 2-D cloud model</small></div>
+  <select id="preset" title="プリセット"></select>
+  <div class="tbtn">
+    <button id="play" class="primary" title="再生 / 停止 (Space)">▶ 再生</button>
+    <button id="stepBtn" title="1 ステップ進める">⏵|</button>
+    <button id="resetBtn" title="初期化 (R)">↺ 初期化</button>
+  </div>
+  <div class="grow"></div>
+  <div id="clock">00:00:00<span id="speed">×0</span></div>
+  <div class="stat" id="stat">—</div>
+  <button id="artBtn" title="アートモード: UI を隠して眺める (A / Esc で戻る)">◐ アート</button>
+  <button id="infoBtn" title="モデルの説明">ⓘ</button>
+  <button id="panelToggle">設定</button>
+</div>
+
+<div id="stack"><div id="row2">
+  <div id="toolhint"></div>
+  <div id="viewbar">
+    <label>塗り<select id="vbFill"></select></label>
+    <label>等値線 A<select id="vbC1"></select></label>
+    <label>等値線 B<select id="vbC2"></select></label>
+    <button id="vbWind" title="風ベクトルを重ねる">風</button>
+    <button id="vbPhase" title="雲を相 (水/氷/雨/雪) で色分け">相の色</button>
+    <button id="vbWx" title="地表の降水 (雨/雪) を帯で表示">地上天気</button>
+    <button id="vbComposite" class="primary" title="RH 塗り + 気温等値線 (0 °C 太線) + 鉛直速度等値線 + 風 + 相の色 + 地上天気">統合表示</button>
+    <button id="vbClear" title="重ね表示を全部消す">写真のみ</button>
+  </div>
+</div>
+<div id="cond"><div class="hd"><span>前提条件 (この計算の設定)</span><button id="condToggle" class="x" title="折り畳む">▾</button></div><div id="condBody" class="mono"></div></div></div>
+<div id="tools">
+  <button data-tool="probe" class="on" title="探査">探査</button>
+  <button data-tool="parcel" title="空気塊の追跡粒子">粒子</button>
+  <button data-tool="drop" title="雲粒 (1 µm から成長)">雲粒</button>
+  <button data-tool="bubble" title="暖気泡 / 冷気泡">熱泡</button>
+  <button data-tool="raise" title="地形を盛る / 削る">地形</button>
+  <button data-tool="paint" title="地表の材質を塗る">材質</button>
+</div>
+
+<div id="readout">
+  <div id="legend"><span id="legMin">0</span><canvas id="legBar" width="140" height="10"></canvas><span id="legMax">1</span><span id="legName" style="color:var(--muted)"></span></div>
+  <div id="cursor"></div>
+</div>
+
+<div id="artCap"><span id="artName"></span><small id="artTime"></small></div>
+<div id="tracer"><div class="t">追跡粒子</div><div class="g" id="trG"></div><canvas id="spark" width="400" height="120"></canvas></div>
+
+<div id="obs" title="クリックで折り畳み"><div class="t">観測 (自動判定は目安) ▾</div><div class="cls" id="obsCls">—</div><div class="g" id="obsG"></div></div>
+
+<div id="panel">
+  <div id="tabs">
+    <button data-tab="env" class="on">大気</button><button data-tab="sfc">地表</button><button data-tab="wind">気流</button><button data-tab="micro">雲物理</button><button data-tab="view">表示</button><button data-tab="part">粒子</button><button data-tab="num">計算</button>
+  </div>
+  <div id="tabbody">
+    <div class="tab on" id="tab-env"></div>
+    <div class="tab" id="tab-sfc"></div>
+    <div class="tab" id="tab-wind"></div>
+    <div class="tab" id="tab-micro"></div>
+    <div class="tab" id="tab-view"></div>
+    <div class="tab" id="tab-part"></div>
+    <div class="tab" id="tab-num"></div>
+  </div>
+</div>
+
+<div id="modal"><div class="box">
+<button class="close" id="modalClose">閉じる</button>
+<h2>Nephos — 支配方程式と数値解法</h2>
+<p>鉛直断面 (x: 水平, z: 高度) の 2 次元非静力学モデル。密度成層を保ったまま音波を除去する anelastic 近似を用い、基本場 (θ₀, ρ₀, π₀) は静力学平衡から積分する。全ての計算は WebGL2 のフラグメントシェーダで格子点ごとに並列実行される。</p>
+<h4>運動方程式・連続の式</h4>
+<div class="eq">Dv/Dt = −(1/ρ₀)∇φ + B ẑ + ∇·(ν_t ∇v)          ∇·(ρ₀ v) = 0
+B = g [ (θ_v − θ_v0)/θ_v0 − (q_c + q_r + q_i + q_s) ]     θ_v = θ (1 + 0.61 q_v)
+ν_t = (C_s Δ)² |S| + ν₀   (Smagorinsky 乱流粘性)</div>
+<h4>熱力学・水物質</h4>
+<div class="eq">Dθ/Dt = (1/(c_p π₀)) [ L_v (C − E_r) + L_s (D_i + D_s) + L_f (F_c + F_r + R − M) ] + 放射 + 地表フラックス
+Dq_x/Dt + ∂(V_x q_x)/∂z = 微物理源・吸収     x ∈ {v, c, r, i, s}
+e_sw = 611.2 exp(17.67 T_c/(T_c+243.5)),  e_si = 611.2 exp(22.46 T_c/(T_c+272.62)),  q_s = ε e_s/(p − e_s)</div>
+<p>暖かい雨: 飽和調節 (潜熱付き), 自己変換 k₁(q_c − q_c0), 併合 k₂ q_c q_r^0.875, 雨の蒸発 (Klemp–Wilhelmson 型), 落下速度 V_r = 36.34 (ρ q_r)^0.1364 (ρ₀₀/ρ)^½。氷相: 均質凍結 (−40 °C), 不均質凍結 (過冷却に依存), 氷への昇華成長と Wegener–Bergeron–Findeisen 過程 (氷飽和と水飽和の差が駆動), 雪への変換, 雲粒捕捉 (雲粒着氷), 融解。</p>
+<h4>数値解法</h4>
+<p>MacCormack (BFECC 系) 半ラグランジュ移流 + 局所クランプ, 圧力ポアソン方程式 ∇²φ = ∇·(ρ₀ v) を Jacobi 反復で解く射影法, 上端は Rayleigh スポンジ層付き剛体蓋, 側面は気流設定に応じたナッジング流入 / 勾配ゼロ流出。地表は地形マスク内で速度ゼロ (粘着)、地表セルでバルク式の顕熱・潜熱・運動量フラックス。</p>
+<h4>追跡粒子</h4>
+<p>空気塊粒子は流れに追従する。雲粒粒子は半径 r を持ち、拡散成長 dr²/dt = 2 G S (S は過飽和度; 雲内では上昇流に比例した過飽和を仮定), 連続捕捉 dr/dt = E ρ q_c V_t/(4 ρ_w), 終端速度 V_t (Stokes / 線形 / 平方根の 3 領域) で落下する。−38 °C 以下で氷晶に転じ、氷飽和を基準に成長する。</p>
+<h4>境界条件</h4>
+<p>上端は剛体蓋 + Rayleigh スポンジ層。左右は「気流」タブで選ぶ: <b>開放</b> は境界近くの吸収層で基本場 (θ₀, q_v0, 初期風 u₀(z)) へ緩和しつつ、気流の流入側ではその目標値へ置き換える (流出側は勾配ゼロ)。<b>周期</b> は右端と左端をつなぐ。<b>閉鎖</b> は両端を壁にする。地表は地形マスク内で速度ゼロ。</p>
+<h4>雲の色の意味 (描画)</h4>
+<p>雲の明るさは、その点から太陽へ向かう経路上の光学的厚さ τ (雲水 1.5×10⁵, 雲氷 3×10⁴, 雨 1.5×10³, 雪 3×10³ m⁻¹ per kg/kg の消散係数で積分) から、多重散乱の近似 L = 0.30 + 0.70·exp(−0.005 τ) で決める。つまり日向側の雲頂が白く、厚い雲の底や陰が灰〜青灰 (空の環境光) になる。不透明度は局所の消散 × 「見かけの奥行き」で決まり、薄い巻雲は透けて見える。相の色: 通常表示では水滴=白、氷晶=わずかに青白、雨=灰、雪=白灰の淡い差だけ。表示バーの「相の色」を入れると氷晶=青紫、雨=青、雪=水色に強調される。色は温度や湿度を表さない (それらは塗り・等値線で重ねる)。</p>
+<h4>地上天気</h4>
+<p>各列の地表直上セルの雨・雪の混合比と落下速度から降水強度 (ρ q V, mm/h) を求め、ドメイン下端の帯に描く (青=雨, 白=雪, 紫=みぞれ)。観測パネルにも降水域の割合と最大強度を出す。</p>
+<h4>制約</h4>
+<p>x–z 断面なので、水平面の von Kármán 渦列そのものは現れない。塔や煙突 (材質「煙突」) を置くと、その風下で x–z 面内の剥離渦が周期的に放出される (「煙突の後流」プリセット)。微物理はバルク 1 モーメント。乱流は 2 次元なので実際の 3 次元乱流よりエネルギーが大規模へ集まりやすい。2 次元で側方希釈がないため積乱雲の上昇流は実際より強めに出る。</p>
+</div></div>
+
+<script>
+'use strict';
+// ============================================================
+// Nephos — 2-D anelastic cloud model on WebGL2
+// ============================================================
+const $=s=>document.querySelector(s);
+const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+const errBox=$('#err');
+function fatal(msg){errBox.style.display='block';errBox.textContent+=msg+'\n';console.error(msg);}
+
+const canvas=$('#gl');
+const gl=canvas.getContext('webgl2',{antialias:false,alpha:false,preserveDrawingBuffer:location.hash.startsWith('#autotest'),powerPreference:'high-performance'});
+if(!gl){fatal('WebGL2 が使えません。Chrome / Safari / Firefox の最新版で開いてください。');throw new Error('no webgl2');}
+const extCBF=gl.getExtension('EXT_color_buffer_float');
+if(!extCBF){fatal('EXT_color_buffer_float がありません (浮動小数テクスチャへの描画が必要です)。');throw new Error('no float rt');}
+gl.getExtension('OES_texture_float_linear');
+
+// ------------------------------------------------------------
+// Shader sources
+// ------------------------------------------------------------
+const VS_FS=`#version 300 es
+void main(){vec2 p=vec2((gl_VertexID==1)?3.:-1.,(gl_VertexID==2)?3.:-1.);gl_Position=vec4(p,0.,1.);}`;
+
+const PRE=`#version 300 es
+precision highp float;precision highp int;precision highp sampler2D;
+uniform ivec2 uN;uniform float uDx;uniform float uDt;uniform int uMode;uniform int uLat;
+uniform sampler2D uBase;uniform sampler2D uMask;uniform sampler2D uTerr;
+const float g0=9.81,Rd=287.04,Rv=461.5,cp=1004.5,Lv=2.501e6,Ls=2.834e6,Lf=0.333e6,eps=0.622,p00=1.0e5;
+ivec2 cc(ivec2 c){if(uLat==1)c.x=(c.x%uN.x+uN.x)%uN.x;return clamp(c,ivec2(0),uN-1);}
+vec4 F(sampler2D t,ivec2 c){return texelFetch(t,cc(c),0);}
+bool solid(ivec2 c){if(c.y<0)return uMode==0;if(c.y>=uN.y)return uMode==0;if(uLat==1)c.x=(c.x%uN.x+uN.x)%uN.x;if(c.x<0||c.x>=uN.x)return uLat==2;return texelFetch(uMask,c,0).r>0.5;}
+vec4 B0(int k){return texelFetch(uBase,ivec2(clamp(k,0,uN.y-1),0),0);}
+vec4 B1(int k){return texelFetch(uBase,ivec2(clamp(k,0,uN.y-1),1),0);}
+float esw(float T){return 611.2*exp(17.67*(T-273.15)/(T-29.65));}
+float esi(float T){return 611.2*exp(22.46*(T-273.15)/(T-0.53));}
+float qsat(float es,float p){return eps*es/max(p-es,1.0);}
+float pres(float pi0){return p00*pow(pi0,3.5);}
+// 圧力の隣接値: 固体は Neumann (中心値)、開放境界の側面は Dirichlet p=0。
+// WHY: 全周 Neumann だと Poisson が特異で、流入≠流出の質量不整合が毎ステップ定数として p に蓄積し
+//      float32 の桁を食って数時間後に発散する (2026-09-25 incident: 2304x768 で 2.5h 後に全域 NaN)。
+//      側面 p=0 で特異性が消え、境界法線速度が圧力で自由に調整される (開放境界の標準的な扱い)。戻すな。
+float pN(sampler2D t,ivec2 n,float pc){if(solid(n))return pc;if(uLat==0&&(n.x<0||n.x>=uN.x))return 0.;return F(t,n).x;}
+vec4 sampZ(sampler2D t,vec2 p){vec2 q=p-0.5;vec2 f=fract(q);ivec2 i=ivec2(floor(q));
+ vec4 a=solid(i)?vec4(0):F(t,i);vec4 b=solid(i+ivec2(1,0))?vec4(0):F(t,i+ivec2(1,0));
+ vec4 c=solid(i+ivec2(0,1))?vec4(0):F(t,i+ivec2(0,1));vec4 d=solid(i+ivec2(1,1))?vec4(0):F(t,i+ivec2(1,1));
+ return mix(mix(a,b,f.x),mix(c,d,f.x),f.y);}
+vec4 sampM(sampler2D t,vec2 p,vec4 fb){vec2 q=p-0.5;vec2 f=fract(q);ivec2 i=ivec2(floor(q));
+ ivec2 c00=i,c10=i+ivec2(1,0),c01=i+ivec2(0,1),c11=i+ivec2(1,1);
+ float w00=solid(c00)?0.:(1.-f.x)*(1.-f.y),w10=solid(c10)?0.:f.x*(1.-f.y),w01=solid(c01)?0.:(1.-f.x)*f.y,w11=solid(c11)?0.:f.x*f.y;
+ float ws=w00+w10+w01+w11;if(ws<1e-6)return fb;
+ return (F(t,c00)*w00+F(t,c10)*w10+F(t,c01)*w01+F(t,c11)*w11)/ws;}
+`;
+
+// --- mask generation from terrain heights (vertical) or islands (horizontal)
+const FS_MASK=`#version 300 es
+precision highp float;precision highp int;precision highp sampler2D;
+uniform ivec2 uN;uniform float uDx;uniform int uMode;uniform sampler2D uTerr;uniform vec4 uIsl[4];uniform int uNIsl;
+out vec4 o;
+void main(){ivec2 c=ivec2(gl_FragCoord.xy);
+ if(uMode==0){float h=texelFetch(uTerr,ivec2(c.x,0),0).x;float z=(float(c.y)+0.5)*uDx;o=vec4(z<h?1.:0.,0,0,0);}
+ else{vec2 p=(vec2(c)+0.5)*uDx;float s=0.;for(int i=0;i<4;i++){if(i>=uNIsl)break;vec2 d=(p-uIsl[i].xy)/uIsl[i].zw;if(dot(d,d)<1.)s=1.;}o=vec4(s,0,0,0);}}`;
+
+// --- semi-Lagrangian step (forward or reverse)
+const FS_ADV=PRE+`
+uniform sampler2D uVel,uSrc,uFallT;uniform float uSign;uniform int uKind;
+out vec4 o;
+vec2 depart(vec2 p,float fall){vec2 v1=sampZ(uVel,p).xy;v1.y-=fall;vec2 pm=p-0.5*uDt*uSign*v1/uDx;vec2 v2=sampZ(uVel,pm).xy;v2.y-=fall;return p-uDt*uSign*v2/uDx;}
+void main(){ivec2 c=ivec2(gl_FragCoord.xy);vec2 p=vec2(c)+0.5;vec4 cur=F(uSrc,c);
+ if(solid(c)){o=(uKind==0)?vec4(0.):cur;return;}
+ if(uKind==0){o=sampZ(uSrc,depart(p,0.));}
+ else if(uKind==1){o=sampM(uSrc,depart(p,0.),cur);}
+ else{vec4 fl=F(uFallT,c);vec4 r;
+  for(int j=0;j<4;j++){r[j]=sampM(uSrc,depart(p,fl[j]),cur)[j];}o=r;}}`;
+
+// --- MacCormack combine with local clamp
+const FS_MC=PRE+`
+uniform sampler2D uVel,uPhi,uHat,uBar,uFallT;uniform int uKind;
+out vec4 o;
+vec2 depart(vec2 p,float fall){vec2 v1=sampZ(uVel,p).xy;v1.y-=fall;vec2 pm=p-0.5*uDt*v1/uDx;vec2 v2=sampZ(uVel,pm).xy;v2.y-=fall;return p-uDt*v2/uDx;}
+void mm(vec2 d,int j,inout float mn,inout float mx){vec2 q=d-0.5;ivec2 i=ivec2(floor(q));
+ for(int a=0;a<2;a++)for(int b=0;b<2;b++){ivec2 cc2=i+ivec2(a,b);float v;
+  if(solid(cc2)){if(uKind==0)v=0.;else continue;}else v=F(uPhi,cc2)[j];mn=min(mn,v);mx=max(mx,v);}}
+void main(){ivec2 c=ivec2(gl_FragCoord.xy);vec2 p=vec2(c)+0.5;vec4 phi=F(uPhi,c),hat=F(uHat,c),bar=F(uBar,c);
+ if(solid(c)){o=(uKind==0)?vec4(0.):phi;return;}
+ vec4 r=hat+0.5*(phi-bar);vec4 fl=(uKind==2)?F(uFallT,c):vec4(0.);
+ for(int j=0;j<4;j++){float mn=1e30,mx=-1e30;mm(depart(p,fl[j]),j,mn,mx);if(mn>mx){mn=phi[j];mx=phi[j];}r[j]=clamp(r[j],mn,mx);}
+ o=r;}`;
+
+// --- forces: diffusion, buoyancy, surface fluxes, nudging, sponge, radiation  (MRT: vel, thermo)
+const FS_FORCE=PRE+`
+layout(location=0) out vec4 oV;layout(location=1) out vec4 oT;
+uniform sampler2D uVel,uTh,uHy;
+uniform float uG,uNu,uCs,uSpH,uSpRate,uLatW,uLatTau,uNudgeTau,uCh,uCe,uCd,uRadTop,uRadClr,uNoise,uTime;
+uniform vec4 uAirA[8];uniform vec4 uAirB[8];uniform int uNAir;
+float hash(vec2 p){return fract(sin(dot(p,vec2(127.1,311.7)))*43758.5453);}
+void main(){ivec2 c=ivec2(gl_FragCoord.xy);int k=c.y;vec4 b=B0(k);float th0=b.x,rho0=b.y,pi0=b.z,qv0=b.w;float u0=B1(k).x;
+ vec4 V=F(uVel,c);vec4 T4=F(uTh,c);vec4 H=F(uHy,c);
+ if(solid(c)){oV=vec4(0.);oT=vec4(th0,qv0,0,0);return;}
+ vec2 v=V.xy;float th=T4.x,qv=T4.y;
+ if(any(isnan(v))||any(isinf(v)))v=vec2(0.);if(isnan(th)||isinf(th))th=th0;if(isnan(qv)||isinf(qv))qv=qv0;
+ float z=(float(k)+0.5)*uDx,x=(float(c.x)+0.5)*uDx;float Lx=float(uN.x)*uDx,Lz=float(uN.y)*uDx;
+ ivec2 cl=c-ivec2(1,0),cr=c+ivec2(1,0),cb=c-ivec2(0,1),ct=c+ivec2(0,1);
+ bool sl=solid(cl),sr=solid(cr),sb=solid(cb),st=solid(ct);
+ vec2 vl=sl?vec2(0):F(uVel,cl).xy,vr=sr?vec2(0):F(uVel,cr).xy,vb=sb?vec2(0):F(uVel,cb).xy,vt=st?vec2(0):F(uVel,ct).xy;
+ vec2 tl=sl?T4.xy:F(uTh,cl).xy,tr=sr?T4.xy:F(uTh,cr).xy,tb=sb?T4.xy:F(uTh,cb).xy,tt=st?T4.xy:F(uTh,ct).xy;
+ float dudx=(vr.x-vl.x)/(2.*uDx),dwdz=(vt.y-vb.y)/(2.*uDx),dudz=(vt.x-vb.x)/(2.*uDx),dwdx=(vr.y-vl.y)/(2.*uDx);
+ float S=sqrt(2.*(dudx*dudx+dwdz*dwdz)+(dudz+dwdx)*(dudz+dwdx));
+ float nu=uNu+(uCs*uDx)*(uCs*uDx)*S;nu=min(nu,0.2*uDx*uDx/uDt);
+ vec2 lapV=(vl+vr+vt+vb-4.*v)/(uDx*uDx);vec2 lapT=(tl+tr+tb+tt-4.*T4.xy)/(uDx*uDx);
+ v+=uDt*nu*lapV;th+=uDt*nu*lapT.x;qv+=uDt*nu*lapT.y;
+ float qh=H.x+H.y+H.z+H.w;float thv=th*(1.+0.61*qv),thv0=th0*(1.+0.61*qv0);
+ v.y+=uDt*uG*((thv-thv0)/thv0-qh);
+ bool sfc=sb||sl||sr||(uMode==1&&st);
+ if(sfc){vec4 tr4=texelFetch(uTerr,ivec2(c.x,0),0);float Tsfc=tr4.z,beta=tr4.w;float p0=pres(pi0);
+  float boost=(tr4.y>5.5)?4.:1.; // 煙突 (材質 6): 強制排気を模して交換係数を 8 倍
+  float U=sqrt(dot(v,v)+1.0);float ths=Tsfc/pi0;
+  float fh=min(1.,boost*uCh*U*uDt/uDx);th+=fh*(ths-th);
+  float qss=qsat(esw(min(Tsfc,328.15)),p0); // 地表の飽和比湿は 55 °C 飽和で頭打ち (煙突 90 °C で 1.45 kg/kg になり潜熱で発散した 2026-09-25 incident)
+  float fe=min(1.,boost*uCe*U*beta*uDt/uDx);qv+=fe*(qss-qv);
+  float fd=min(1.,uCd*U*uDt/uDx);v*=(1.-fd);
+  th+=uNoise*(hash(vec2(c)+fract(uTime*0.37))-0.5)*uDt;}
+ if(uLat==0){ // 開放境界: 側面吸収層 (基本場へ緩和して擾乱の反射を抑える)
+  float dl=min(x,Lx-x);float wl=clamp(1.-dl/uLatW,0.,1.);float rl=wl*wl*min(1.,uDt/uLatTau);
+  v.x+=rl*(u0-v.x);v.y-=rl*v.y;th+=rl*(th0-th);qv+=rl*(qv0-qv);}
+ for(int i=0;i<8;i++){if(i>=uNAir||uLat!=0)break;vec4 A=uAirA[i],Bq=uAirB[i];
+  float zin=smoothstep(A.y-uDx,A.y+uDx,z)*(1.-smoothstep(A.z-uDx,A.z+uDx,z));
+  float dist=(A.x<0.)?x:(Lx-x);float wgt=clamp(1.-dist/uLatW,0.,1.);wgt=wgt*wgt;
+  float r=zin*wgt*min(1.,uDt/uNudgeTau);
+  if(r>0.){float dTe=Bq.x*(1.-smoothstep(0.5*(A.y+A.z),A.z,z));float thT=th0+dTe/pi0;float Tt=thT*pi0;float qvT=(Bq.y<0.)?qv0:Bq.y*qsat(esw(Tt),pres(pi0));
+   v.x+=r*(A.w-v.x);v.y-=r*v.y;th+=r*(thT-th);qv+=r*(qvT-qv);}}
+ if(uSpH>0.){float zs=(1.-uSpH)*Lz;if(z>zs){float s=(z-zs)/(Lz-zs);s=s*s;float r=min(1.,s*uSpRate*uDt);v.x+=r*(u0-v.x);v.y-=r*v.y;th+=r*(th0-th);}}
+ float qcl=H.x+H.z+0.3*H.w;
+ if(uRadTop>0.&&qcl>2e-5){vec4 Ht=st?vec4(0):F(uHy,ct);float qclT=Ht.x+Ht.z+0.3*Ht.w;float expo=1.-clamp(qclT/2e-5,0.,1.);th-=uRadTop*uDt/pi0*expo;}
+ th-=uRadClr*uDt/pi0;
+ oV=vec4(v,0,0);oT=vec4(th,max(qv,0.),0,0);}`;
+
+// --- bulk microphysics (MRT: thermo, hydro, fall speeds)
+const FS_MICRO=PRE+`
+layout(location=0) out vec4 oT;layout(location=1) out vec4 oH;layout(location=2) out vec4 oF;
+uniform sampler2D uTh,uHy;
+uniform float uK1,uQc0,uK2,uKe,uTauF,uTauDep,uKis,uQi0,uKsc,uTauMelt,uIceOn,uWarmOn,uEvapWake,uVsn,uVic;
+void main(){ivec2 c=ivec2(gl_FragCoord.xy);int k=c.y;vec4 b=B0(k);float th0=b.x,rho0=b.y,pi0=b.z,qv0=b.w;
+ vec4 T4=F(uTh,c);vec4 H=F(uHy,c);
+ if(solid(c)){oT=vec4(th0,qv0,0,0);oH=vec4(0.);oF=vec4(0.);return;}
+ float th=T4.x,qv=T4.y,qc=H.x,qr=H.y,qi=H.z,qs=H.w;float dt=uDt;
+ if(any(isnan(H))||any(isinf(H))){qc=0.;qr=0.;qi=0.;qs=0.;}
+ if(uMode==1){qc*=exp(-dt*uEvapWake*max(0.,th-th0-0.1));th+=min(1.,dt/900.)*(th0-th);oT=vec4(th,qv,0,0);oH=vec4(qc,0,0,0);oF=vec4(0.);return;}
+ float p=pres(pi0);float T=th*pi0;
+ if(uWarmOn>0.5){float qsw=qsat(esw(T),p);float gam=1.+Lv*Lv*qsw/(cp*Rv*T*T);float dq=(qv-qsw)/gam;
+  if(dq<0.)dq=max(dq,-qc);if(T<233.15&&dq>0.)dq=0.;
+  qc+=dq;qv-=dq;th+=Lv*dq/(cp*pi0);T=th*pi0;}
+ if(uIceOn>0.5){
+  if(T<273.15){
+   if(T<233.15){float f=qc;qi+=f;th+=Lf*f/(cp*pi0);qc=0.;float fr=qr;qs+=fr;th+=Lf*fr/(cp*pi0);qr=0.;T=th*pi0;}
+   else{float sc=clamp((273.15-T)/35.,0.,1.);float fr=qc*min(1.,dt/uTauF*sc*sc);qc-=fr;qi+=fr;th+=Lf*fr/(cp*pi0);
+    float frr=qr*min(1.,dt/(uTauF*3.)*sc*sc);qr-=frr;qs+=frr;th+=Lf*frr/(cp*pi0);T=th*pi0;}
+   float qsi=qsat(esi(T),p);float Sthr=(T<235.)?1.25:1.05;
+   bool nuc=(qi>1e-9)||(T<261.&&qv>qsi*Sthr)||(qc>1e-6&&T<261.);
+   if(nuc){float gam=1.+Ls*Ls*qsi/(cp*Rv*T*T);float dq=(qv-qsi)/gam;float rate=min(1.,dt/uTauDep*(1.+qi/1e-4));dq*=rate;
+    if(dq<0.)dq=max(dq,-qi);qi+=dq;qv-=dq;th+=Ls*dq/(cp*pi0);T=th*pi0;}
+   if(qs>1e-8){qsi=qsat(esi(T),p);float gam=1.+Ls*Ls*qsi/(cp*Rv*T*T);float dq=(qv-qsi)/gam*min(1.,dt/(uTauDep*4.)*sqrt(qs/1e-4));
+    if(dq<0.)dq=max(dq,-qs);qs+=dq;qv-=dq;th+=Ls*dq/(cp*pi0);T=th*pi0;}
+   float au=max(0.,qi-uQi0)*min(1.,uKis*dt);qi-=au;qs+=au;
+   if(qs>0.&&qc>0.){float rm=min(qc,uKsc*qc*pow(qs,0.875)*dt);qc-=rm;qs+=rm;th+=Lf*rm/(cp*pi0);}
+   if(qs>0.&&qi>0.){float ag=min(qi,0.5*uKsc*qi*pow(qs,0.875)*dt);qi-=ag;qs+=ag;}
+   T=th*pi0;
+  }else{
+   if(qi>0.){qc+=qi;th-=Lf*qi/(cp*pi0);qi=0.;}
+   if(qs>0.){float m=min(qs,(T-273.15)*dt/uTauMelt);qs-=m;qr+=m;th-=Lf*m/(cp*pi0);}
+   T=th*pi0;}
+ }
+ float au=max(0.,qc-uQc0)*min(1.,uK1*dt);qc-=au;qr+=au;
+ if(qr>0.&&qc>0.){float ac=min(qc,uK2*qc*pow(qr,0.875)*dt);qc-=ac;qr+=ac;}
+ if(qr>1e-9){float qsw=qsat(esw(T),p);if(qv<qsw){float rqr=rho0*qr*1e3;float Cc=1.6+124.9*pow(rqr,0.2046);
+   float ev=(1.-qv/qsw)*Cc*pow(rqr,0.525)/(5.4e5+2.55e6/(p*0.01*qsw))/rho0*uKe*dt;ev=min(qr,min(ev,qsw-qv));
+   qr-=ev;qv+=ev;th-=Lv*ev/(cp*pi0);T=th*pi0;}}
+ float Vr=(qr>1e-9)?36.34*pow(rho0*qr*1e-3,0.1364)*sqrt(1.2/rho0):0.;
+ float Vs=(qs>1e-9)?uVsn*pow(1.2/rho0,0.4):0.;
+ float Vi=(qi>1e-9)?uVic*pow(1.2/rho0,0.3):0.;
+ if(solid(c-ivec2(0,1))){qr*=max(0.,1.-Vr*dt/uDx);qs*=max(0.,1.-Vs*dt/uDx);qi*=max(0.,1.-Vi*dt/uDx);}
+ oT=vec4(th,max(qv,0.),0,0);oH=max(vec4(qc,qr,qi,qs),vec4(0.));oF=vec4(0.,Vr,Vi,Vs);}`;
+
+const FS_DIV=PRE+`
+uniform sampler2D uVel;out vec4 o;
+void main(){ivec2 c=ivec2(gl_FragCoord.xy);if(solid(c)){o=vec4(0.);return;}
+ float rho=B0(c.y).y,rT=B0(c.y+1).y,rB=B0(c.y-1).y;
+ ivec2 cl=c-ivec2(1,0),cr=c+ivec2(1,0),cb=c-ivec2(0,1),ct=c+ivec2(0,1);
+ vec2 vl=solid(cl)?vec2(0):F(uVel,cl).xy,vr=solid(cr)?vec2(0):F(uVel,cr).xy,vb=solid(cb)?vec2(0):F(uVel,cb).xy,vt=solid(ct)?vec2(0):F(uVel,ct).xy;
+ float div=(rho*vr.x-rho*vl.x)/(2.*uDx)+(rT*vt.y-rB*vb.y)/(2.*uDx);o=vec4(div,0,0,0);}`;
+
+const FS_JAC=PRE+`
+uniform sampler2D uP,uDiv;out vec4 o;
+void main(){ivec2 c=ivec2(gl_FragCoord.xy);if(solid(c)){o=vec4(0.);return;}
+ float p=F(uP,c).x;if(isnan(p)||isinf(p))p=0.;ivec2 cl=c-ivec2(1,0),cr=c+ivec2(1,0),cb=c-ivec2(0,1),ct=c+ivec2(0,1);
+ float pl=pN(uP,cl,p),pr=pN(uP,cr,p),pb=pN(uP,cb,p),pt=pN(uP,ct,p);float b=F(uDiv,c).x;if(isnan(b)||isinf(b))b=0.;
+ o=vec4(0.25*(pl+pr+pb+pt-uDx*uDx*b),0,0,0);}`;
+
+const FS_GRAD=PRE+`
+uniform sampler2D uP,uVel;out vec4 o;
+void main(){ivec2 c=ivec2(gl_FragCoord.xy);if(solid(c)){o=vec4(0.);return;}
+ float rho=B0(c.y).y;float p=F(uP,c).x;ivec2 cl=c-ivec2(1,0),cr=c+ivec2(1,0),cb=c-ivec2(0,1),ct=c+ivec2(0,1);
+ float pl=pN(uP,cl,p),pr=pN(uP,cr,p),pb=pN(uP,cb,p),pt=pN(uP,ct,p);
+ vec2 v=F(uVel,c).xy-vec2(pr-pl,pt-pb)/(2.*uDx*rho);if(any(isnan(v))||any(isinf(v)))v=vec2(0.);o=vec4(v,0,0);}`;
+
+const FS_JACW=PRE+`
+uniform sampler2D uP,uDiv;uniform float uOmega;out vec4 o;
+void main(){ivec2 c=ivec2(gl_FragCoord.xy);if(solid(c)){o=vec4(0.);return;}
+ float p=F(uP,c).x;if(isnan(p)||isinf(p))p=0.;ivec2 cl=c-ivec2(1,0),cr=c+ivec2(1,0),cb=c-ivec2(0,1),ct=c+ivec2(0,1);
+ float pl=pN(uP,cl,p),pr=pN(uP,cr,p),pb=pN(uP,cb,p),pt=pN(uP,ct,p);float b=F(uDiv,c).x;if(isnan(b)||isinf(b))b=0.;
+ float ps=0.25*(pl+pr+pb+pt-uDx*uDx*b);o=vec4(p+uOmega*(ps-p),0,0,0);}`;
+const FS_RESID=PRE+`
+uniform sampler2D uP,uDiv;out vec4 o;
+void main(){ivec2 c=ivec2(gl_FragCoord.xy);if(solid(c)){o=vec4(0.);return;}
+ float p=F(uP,c).x;ivec2 cl=c-ivec2(1,0),cr=c+ivec2(1,0),cb=c-ivec2(0,1),ct=c+ivec2(0,1);
+ float pl=pN(uP,cl,p),pr=pN(uP,cr,p),pb=pN(uP,cb,p),pt=pN(uP,ct,p);
+ float Ap=(pl+pr+pb+pt-4.*p)/(uDx*uDx);o=vec4(F(uDiv,c).x-Ap,0,0,0);}`;
+const FS_RESTRICT=PRE+`
+uniform sampler2D uFine,uFineMask;out vec4 o;
+void main(){ivec2 c=ivec2(gl_FragCoord.xy);if(solid(c)){o=vec4(0.);return;}float s=0.,n=0.;
+ for(int a=0;a<2;a++)for(int b=0;b<2;b++){ivec2 f=c*2+ivec2(a,b);if(texelFetch(uFineMask,f,0).r>0.5)continue;s+=texelFetch(uFine,f,0).x;n+=1.;}
+ o=vec4(n>0.?s/n:0.,0,0,0);}`;
+const FS_PROLONG=PRE+`
+uniform sampler2D uP,uCoarse,uCoarseMask;uniform ivec2 uNc;uniform float uPw;out vec4 o;
+void main(){ivec2 c=ivec2(gl_FragCoord.xy);float p=F(uP,c).x;if(solid(c)){o=vec4(0.);return;}
+ vec2 q=(vec2(c)+0.5)*0.5-0.5;vec2 f=fract(q);ivec2 i=ivec2(floor(q));float s=0.,n=0.;
+ for(int a=0;a<2;a++)for(int b=0;b<2;b++){ivec2 cc2=i+ivec2(a,b);if(uLat==1)cc2.x=(cc2.x+uNc.x)%uNc.x;cc2=clamp(cc2,ivec2(0),uNc-1);float w=(a==0?1.-f.x:f.x)*(b==0?1.-f.y:f.y);if(texelFetch(uCoarseMask,cc2,0).r>0.5)continue;s+=w*texelFetch(uCoarse,cc2,0).x;n+=w;}
+ o=vec4(p+uPw*(n>0.?s/n:0.),0,0,0);}`;
+const FS_MASKDOWN=`#version 300 es
+precision highp float;precision highp int;precision highp sampler2D;uniform sampler2D uFineMask;out vec4 o;
+void main(){ivec2 c=ivec2(gl_FragCoord.xy);float s=0.;for(int a=0;a<2;a++)for(int b=0;b<2;b++){s+=texelFetch(uFineMask,c*2+ivec2(a,b),0).r;}o=vec4(s>0.5?1.:0.,0,0,0);}`;
+const FS_PIN=PRE+`
+uniform sampler2D uP;uniform ivec2 uRef;out vec4 o;
+void main(){ivec2 c=ivec2(gl_FragCoord.xy);if(solid(c)){o=vec4(0.);return;}o=vec4(F(uP,c).x-texelFetch(uP,uRef,0).x,0,0,0);}`;
+const FS_SPLAT=PRE+`
+uniform sampler2D uTh;uniform vec2 uC;uniform float uR,uAmp;out vec4 o;
+void main(){ivec2 c=ivec2(gl_FragCoord.xy);vec4 T4=F(uTh,c);if(solid(c)){o=T4;return;}
+ vec2 p=(vec2(c)+0.5)*uDx;float d2=dot(p-uC,p-uC)/(uR*uR);float w=exp(-d2);if(w<1e-4){o=T4;return;}
+ vec4 b=B0(c.y);float pi0=b.z;float p0=pres(pi0);float T=T4.x*pi0;float rh=T4.y/qsat(esw(T),p0);
+ float th=T4.x+uAmp*w/pi0;float Tn=th*pi0;float qv=rh*qsat(esw(Tn),p0);o=vec4(th,qv,0,0);}`;
+
+// --- particles
+const FS_PART=PRE+`
+uniform sampler2D uPart,uVel,uTh,uHy;out vec4 o;
+float vt(float r){if(r<4e-5)return 1.19e8*r*r;if(r<6e-4)return 8e3*r;return 2.01e3*sqrt(r);}
+void main(){int i=int(gl_FragCoord.x);vec4 P=texelFetch(uPart,ivec2(i,0),0);float x=P.x,z=P.y,r=P.z,st=P.w;
+ if(st<0.5||(st>2.5&&st<3.5)){o=P;return;}
+ vec2 pc=vec2(x,z)/uDx;ivec2 c=ivec2(floor(pc));
+ if(c.x<0||c.x>=uN.x||c.y<0||c.y>=uN.y){o=vec4(x,z,r,0.);return;}
+ if(solid(c)){o=vec4(x,z,r,3.);return;}
+ vec2 v=sampZ(uVel,pc).xy;vec4 b=B0(c.y);float pi0=b.z,rho0=b.y;float p=pres(pi0);
+ vec4 T4=sampM(uTh,pc,vec4(b.x,b.w,0,0));vec4 H=sampM(uHy,pc,vec4(0));float T=T4.x*pi0;float qv=T4.y;float qc=H.x;
+ float w=v.y;
+ if(st>1.5&&uMode==0){bool ice=st>3.5;
+  if(!ice&&T<235.){ice=true;st=4.;}if(ice&&T>273.15){ice=false;st=2.;}
+  float qsw=qsat(esw(T),p),qsi=qsat(esi(T),p);float S;
+  if(!ice){S=(qc>1e-5)?clamp(w*1e-3,-0.002,0.006):(qv/qsw-1.);}else{S=(qc>1e-5)?(qsw/qsi-1.):(qv/qsi-1.);}
+  float G=ice?0.5e-10:1.0e-10;float r2=r*r+2.*G*S*uDt;r=sqrt(max(r2,1e-12));
+  float vf=vt(r)*(ice?0.35:1.);float E=smoothstep(1e-5,4e-5,r)*0.9;r+=uDt*E*rho0*qc*vf/4000.;r=min(r,4e-3);
+  w-=vf;}
+ x+=uDt*v.x;z+=uDt*w;if(uLat==1){float Lx=float(uN.x)*uDx;x=mod(x,Lx);}o=vec4(x,z,r,st);}`;
+
+const FS_TRAIL=`#version 300 es
+precision highp float;precision highp sampler2D;uniform sampler2D uPart;out vec4 o;
+void main(){vec4 P=texelFetch(uPart,ivec2(int(gl_FragCoord.x),0),0);o=vec4(P.x,P.y,P.w,P.z);}`;
+
+const VS_POINT=`#version 300 es
+precision highp float;precision highp sampler2D;
+uniform sampler2D uPart;uniform vec4 uRect;uniform vec2 uCanvas;uniform vec2 uDom;uniform float uPx;uniform int uSel;
+out vec4 vCol;out float vKind;
+void main(){vec4 P=texelFetch(uPart,ivec2(gl_VertexID,0),0);
+ if(P.w<0.5){gl_Position=vec4(2.,2.,2.,1.);gl_PointSize=0.;return;}
+ vec2 px=uRect.xy+vec2(P.x/uDom.x,P.y/uDom.y)*uRect.zw;vec2 ndc=px/uCanvas*2.-1.;gl_Position=vec4(ndc,0.,1.);
+ float r=P.z;float sz=(P.w>1.5)?clamp(4.+2.2*log2(max(r/1e-6,1.)),4.,26.):6.;
+ if(gl_VertexID==uSel)sz+=4.;gl_PointSize=sz*uPx;vKind=P.w;
+ if(P.w<1.5)vCol=vec4(1.0,0.72,0.35,1.);else if(P.w<2.5)vCol=vec4(0.55,0.85,1.0,1.);else if(P.w<3.5)vCol=vec4(0.5,0.5,0.55,0.8);else vCol=vec4(0.80,0.78,1.0,1.);
+ if(gl_VertexID==uSel)vCol=vec4(1.0,0.55,0.3,1.);}`;
+const FS_POINT=`#version 300 es
+precision highp float;in vec4 vCol;in float vKind;out vec4 o;
+void main(){vec2 d=gl_PointCoord-0.5;float r=length(d);float a=1.-smoothstep(0.38,0.5,r);
+ float core=1.-smoothstep(0.0,0.42,r);vec3 col=mix(vCol.rgb,vec3(1.),core*0.6);
+ if(vKind>1.5&&vKind<2.5)col=mix(vCol.rgb,vec3(1.),core*0.9);
+ o=vec4(col,a*vCol.a);}`;
+
+const VS_LINE=`#version 300 es
+precision highp float;precision highp sampler2D;
+uniform sampler2D uTrail;uniform sampler2D uPart;uniform int uH,uHead,uSel;uniform vec4 uRect;uniform vec2 uCanvas;uniform vec2 uDom;uniform float uLen;
+out vec4 vCol;
+void main(){int seg=gl_VertexID/2;int i=seg/(uH-1);int j0=seg-i*(uH-1);int j1=j0+1;int j=j0+(gl_VertexID&1);
+ vec4 P=texelFetch(uPart,ivec2(i,0),0);if(P.w<0.5||float(j1)>uLen){gl_Position=vec4(2.,2.,2.,1.);vCol=vec4(0.);return;}
+ // 線分の両端を検査する: 片方だけ無効だと clip 外の点 (2,2) へ線が伸びて画面右上へ走る (2026-09-25 incident) — 両端とも有効なときだけ描く
+ vec4 Q0=texelFetch(uTrail,ivec2(i,(uHead-j0+uH*4)%uH),0);vec4 Q1=texelFetch(uTrail,ivec2(i,(uHead-j1+uH*4)%uH),0);
+ if(Q0.z<0.5||Q1.z<0.5||distance(Q0.xy,Q1.xy)>3000.){gl_Position=vec4(2.,2.,2.,1.);vCol=vec4(0.);return;}
+ vec4 Q=((gl_VertexID&1)==0)?Q0:Q1;
+ vec2 px=uRect.xy+vec2(Q.x/uDom.x,Q.y/uDom.y)*uRect.zw;vec2 ndc=px/uCanvas*2.-1.;gl_Position=vec4(ndc,0.,1.);
+ float a=(1.-float(j)/uLen);a=a*a*0.85;
+ vec3 col=(P.w<1.5)?vec3(1.0,0.72,0.35):(P.w>3.5?vec3(0.8,0.78,1.0):vec3(0.55,0.85,1.0));if(i==uSel)col=vec3(1.0,0.55,0.3);
+ vCol=vec4(col,a);}`;
+const FS_LINE=`#version 300 es
+precision highp float;in vec4 vCol;out vec4 o;void main(){o=vCol;}`;
+
+const VS_ARROW=`#version 300 es
+precision highp float;precision highp sampler2D;
+uniform sampler2D uVel;uniform sampler2D uMask;uniform ivec2 uN;uniform int uStride;uniform vec4 uRect;uniform vec2 uCanvas;uniform float uVmax;
+out float vA;
+void main(){int nxs=(uN.x+uStride-1)/uStride;int ci=(gl_InstanceID%nxs)*uStride+uStride/2;int ck=(gl_InstanceID/nxs)*uStride+uStride/2;
+ ivec2 c=ivec2(min(ci,uN.x-1),min(ck,uN.y-1));float m=texelFetch(uMask,c,0).r;vec2 v=texelFetch(uVel,c,0).xy;
+ float sp=length(v);float cell=uRect.z/float(uN.x)*float(uStride);float L=cell*0.85*clamp(sp/uVmax,0.05,1.);
+ vec2 dir=sp>1e-3?v/sp:vec2(1.,0.);vec2 nrm=vec2(-dir.y,dir.x);
+ int id=gl_VertexID;vec2 lp;
+ if(id==0)lp=vec2(0.);else if(id==1)lp=vec2(1.,0.);else if(id==2)lp=vec2(1.,0.);else if(id==3)lp=vec2(0.68,0.22);else if(id==4)lp=vec2(1.,0.);else lp=vec2(0.68,-0.22);
+ vec2 base=uRect.xy+(vec2(c)+0.5)/vec2(uN)*uRect.zw;vec2 px=base+(dir*lp.x+nrm*lp.y)*L-dir*L*0.5;
+ vec2 ndc=px/uCanvas*2.-1.;gl_Position=vec4(ndc,0.,1.);vA=(m>0.5)?0.:clamp(sp/uVmax,0.25,1.);}`;
+const FS_ARROW=`#version 300 es
+precision highp float;in float vA;out vec4 o;void main(){o=vec4(0.92,0.96,1.0,vA*0.8);}`;
+
+// --- main render
+const FS_RENDER=PRE+`
+uniform sampler2D uVel,uTh,uHy,uP;
+uniform vec4 uRect;uniform vec2 uCanvas;uniform vec2 uSun;uniform int uOverlay,uCmap,uCont1,uCont2;uniform vec2 uRange;uniform float uOvAlpha,uContours,uCont1Int,uCont2Int,uLy,uTime,uArt;uniform int uStyle;
+out vec4 o;
+float h21(vec2 p){p=fract(p*vec2(123.34,456.21));p+=dot(p,p+45.32);return fract(p.x*p.y);}
+float vn(vec2 p){vec2 i=floor(p),f=fract(p);f=f*f*(3.-2.*f);float a=h21(i),b=h21(i+vec2(1,0)),c=h21(i+vec2(0,1)),d=h21(i+vec2(1,1));return mix(mix(a,b,f.x),mix(c,d,f.x),f.y);}
+float fbm(vec2 p){float s=0.,a=0.5;for(int i=0;i<4;i++){s+=a*vn(p);p=p*2.03+vec2(17.1,9.3);a*=0.5;}return s;}
+vec3 viridis(float t){const vec3 c0=vec3(0.2777,0.0054,0.3341),c1=vec3(0.1051,1.4046,1.3846),c2=vec3(-0.3309,0.2148,0.0951),c3=vec3(-4.6342,-5.7991,-19.3324),c4=vec3(6.2283,14.1799,56.6906),c5=vec3(4.7764,-13.7451,-65.3530),c6=vec3(-5.4355,4.6459,26.3124);return c0+t*(c1+t*(c2+t*(c3+t*(c4+t*(c5+t*c6)))));}
+vec3 magma(float t){const vec3 c0=vec3(-0.0021,-0.0007,-0.0054),c1=vec3(0.2517,0.6775,2.4940),c2=vec3(8.3537,-3.5777,0.3145),c3=vec3(-27.6687,14.2647,-13.6492),c4=vec3(52.1761,-27.9436,12.9442),c5=vec3(-50.7685,29.0466,4.2342),c6=vec3(18.6557,-11.4898,-5.6020);return c0+t*(c1+t*(c2+t*(c3+t*(c4+t*(c5+t*c6)))));}
+vec3 inferno(float t){const vec3 c0=vec3(0.0002,0.0017,-0.0195),c1=vec3(0.1065,0.5640,3.9327),c2=vec3(11.6025,-3.9729,-15.9424),c3=vec3(-41.7040,17.4364,44.3541),c4=vec3(77.1629,-33.4024,-81.8073),c5=vec3(-71.3194,32.6261,73.2095),c6=vec3(25.1311,-12.2427,-23.0703);return c0+t*(c1+t*(c2+t*(c3+t*(c4+t*(c5+t*c6)))));}
+vec3 diverge(float t){vec3 b=vec3(0.23,0.30,0.75),w=vec3(0.94,0.94,0.94),r=vec3(0.72,0.09,0.12);return t<0.5?mix(b,w,t*2.):mix(w,r,(t-0.5)*2.);}
+vec3 cmap(float t){t=clamp(t,0.,1.);if(uCmap==0)return viridis(t);if(uCmap==1)return magma(t);if(uCmap==2)return inferno(t);return diverge(t);}
+float hAt(float X){float fx=X/uDx-0.5;int i=int(floor(fx));float f=fract(fx);return mix(texelFetch(uTerr,ivec2(clamp(i,0,uN.x-1),0),0).x,texelFetch(uTerr,ivec2(clamp(i+1,0,uN.x-1),0),0).x,f);}
+vec3 matColor(int m,float h,float slope){vec3 c;
+ if(m==0)c=vec3(0.10,0.28,0.45);else if(m==1)c=vec3(0.30,0.42,0.22);else if(m==2)c=vec3(0.15,0.28,0.16);else if(m==3)c=vec3(0.66,0.56,0.40);else if(m==4)c=vec3(0.90,0.92,0.96);else c=vec3(0.42,0.42,0.46);
+ if(m>=1&&m<=2){c=mix(c,vec3(0.45,0.42,0.40),smoothstep(1800.,2600.,h));c=mix(c,vec3(0.92,0.94,0.97),smoothstep(2700.,3300.,h));}
+ return c;}
+float ext(vec4 H){return 1.5e5*H.x+3.0e4*H.z+1.5e3*H.y+3.0e3*H.w;}
+float fieldAt(int id,vec2 pc,ivec2 c,vec4 b){float pi0=b.z;float p=pres(pi0);
+ vec4 T4=sampM(uTh,pc,vec4(b.x,b.w,0,0));vec4 H=sampM(uHy,pc,vec4(0));vec2 v=sampZ(uVel,pc).xy;float T=T4.x*pi0;
+ if(id==1)return T-273.15;if(id==2)return T4.x;
+ if(id==3)return 100.*T4.y/qsat(esw(T),p);if(id==4)return 100.*T4.y/qsat(esi(T),p);
+ if(id==5)return T4.y*1e3;if(id==6)return v.y;if(id==7)return length(v);if(id==8)return v.x;
+ if(id==9){ivec2 cl=c-ivec2(1,0),cr=c+ivec2(1,0),cb=c-ivec2(0,1),ct=c+ivec2(0,1);
+  vec2 vl=solid(cl)?vec2(0):F(uVel,cl).xy,vr=solid(cr)?vec2(0):F(uVel,cr).xy,vb=solid(cb)?vec2(0):F(uVel,cb).xy,vt=solid(ct)?vec2(0):F(uVel,ct).xy;
+  return (vt.x-vb.x-(vr.y-vl.y))/(2.*uDx);}
+ if(id==10){float thv=T4.x*(1.+0.61*T4.y),thv0=b.x*(1.+0.61*b.w);return g0*((thv-thv0)/thv0-(H.x+H.y+H.z+H.w));}
+ if(id==11)return H.x*1e3;if(id==12)return H.y*1e3;if(id==13)return H.z*1e3;if(id==14)return H.w*1e3;
+ if(id==15)return sampM(uP,pc,vec4(0)).x;
+ if(id==16)return T4.x*exp(Lv*T4.y/(cp*T));
+ return 0.;}
+float cline(float v,float itv){float t=v/itv;float d=abs(fract(t+0.5)-0.5)/max(fwidth(t),1e-5);return 1.-smoothstep(0.,1.1,d);}
+float zline(float v){float d=abs(v)/max(fwidth(v),1e-6);return 1.-smoothstep(0.,2.4,d);}
+void main(){vec2 px=gl_FragCoord.xy;vec2 uv=(px-uRect.xy)/uRect.zw;vec3 bgc=vec3(0.027,0.043,0.078);
+ vec2 uv0=uv;bool outside=(uv.x<0.||uv.x>1.||uv.y<0.||uv.y>1.);
+ if(outside&&uArt<0.5){o=vec4(bgc,1.);return;}
+ if(outside){uv=clamp(uv,vec2(0.),vec2(1.));}
+ float Lx=float(uN.x)*uDx,Lz=float(uN.y)*uDx;vec2 X=uv*vec2(Lx,Lz);vec2 pc=X/uDx;ivec2 c=ivec2(floor(pc));
+ vec4 b=B0(c.y);float e=uSun.x;vec2 sunDir=normalize(vec2(cos(e)*uSun.y,sin(e)));
+ float day=smoothstep(-0.12,0.12,e);vec3 sunCol=mix(vec3(1.0,0.52,0.28),vec3(1.0,0.97,0.92),smoothstep(0.0,0.4,e));
+ vec3 col;
+ if(uMode==1){
+  vec3 sea=mix(vec3(0.05,0.14,0.26),vec3(0.09,0.24,0.40),fbm(X*0.0006+vec2(uTime*0.002,0.)))*(0.35+0.65*day);
+  float m=texelFetch(uMask,c,0).r;
+  float mE=0.;for(int a=-1;a<=1;a++)for(int bb=-1;bb<=1;bb++)mE=max(mE,texelFetch(uMask,cc(c+ivec2(a,bb)),0).r);
+  vec3 land=mix(vec3(0.34,0.40,0.24),vec3(0.55,0.50,0.36),fbm(X*0.001))*(0.3+0.7*day);
+  col=mix(sea,land,m);if(m<0.5&&mE>0.5)col=mix(col,vec3(0.75,0.72,0.55)*(0.3+0.7*day),0.6);
+  vec4 H=sampM(uHy,pc,vec4(0));float qc=H.x;float a=1.-exp(-qc*4500.*(uLy/280.));
+  vec2 g=vec2(sampM(uHy,pc+vec2(1.,0.),vec4(0)).x-sampM(uHy,pc-vec2(1.,0.),vec4(0)).x,sampM(uHy,pc+vec2(0.,1.),vec4(0)).x-sampM(uHy,pc-vec2(0.,1.),vec4(0)).x);
+  float sh=0.72+0.28*clamp(dot(normalize(g+1e-9),-sunDir)*8.*length(g)/(qc+1e-5),-1.,1.);
+  vec3 cl=mix(vec3(0.55,0.62,0.75),vec3(1.0),sh)*(0.25+0.75*day)*mix(vec3(1.),sunCol,0.3);
+  col=mix(col,cl,a);
+ }else{
+  float hx=hAt(X.x);float belowExt=(uArt>0.5&&uv0.y<0.)?1.:0.;
+  if(X.y<hx||belowExt>0.5){int m=int(texelFetch(uTerr,ivec2(c.x,0),0).y+0.5);float hl=hAt(X.x-uDx),hr=hAt(X.x+uDx);float sl=(hr-hl)/(2.*uDx);
+   vec2 n=normalize(vec2(-sl,1.));float li=0.55+0.45*clamp(dot(n,sunDir),-1.,1.)*day;
+   vec3 mc=matColor(m,hx,sl);float depth=clamp((hx-X.y)/600.,0.,1.);
+   if(m==0){float wv=fbm(vec2(X.x*0.004+uTime*0.01,X.y*0.02));mc=mix(vec3(0.10,0.30,0.48),vec3(0.03,0.09,0.18),depth)*(0.35+0.65*day);mc+=vec3(0.9,0.85,0.7)*pow(max(0.,wv-0.55)*3.,3.)*day*0.5*(1.-depth);col=mc;}
+   else{col=mc*li*mix(vec3(1.),sunCol,0.2)*(0.35+0.65*day);col=mix(col,col*0.55,depth*0.7);col+=fbm(X*0.01)*0.04;}
+   float edge=(1.-smoothstep(0.,40.,hx-X.y))*(1.-belowExt);col=mix(col,col*1.25+0.05,edge*0.6);
+  }else{
+   float zf=clamp(X.y/Lz,0.,1.);
+   vec3 zen=mix(vec3(0.010,0.016,0.045),vec3(0.14,0.34,0.72),smoothstep(-0.18,0.32,e));
+   vec3 hor=mix(vec3(0.05,0.05,0.10),mix(vec3(0.98,0.58,0.36),vec3(0.70,0.81,0.92),smoothstep(0.0,0.38,e)),smoothstep(-0.22,0.06,e));
+   vec3 sky=mix(hor,zen,pow(zf,0.55));
+   if(e<0.05){float st=h21(floor(px*0.7));float tw=0.5+0.5*sin(uTime*2.+st*40.);sky+=vec3(0.9,0.95,1.)*step(0.997,st)*tw*(1.-day)*0.8*zf;}
+   col=sky;
+   vec4 H=sampM(uHy,pc,vec4(0));float qc=H.x,qr=H.y,qi=H.z,qs=H.w;
+   float sumq=qc+qr+qi+qs;
+   if(sumq>1e-7){
+    vec2 v=sampZ(uVel,pc).xy;
+    float ncl=0.75+0.5*fbm(X*0.004+vec2(uTime*0.0,0.));
+    vec2 dirI=normalize(vec2(v.x,v.y-0.35)+1e-6);vec2 rI=vec2(dot(X,dirI),dot(X,vec2(-dirI.y,dirI.x)));float nI=0.55+0.6*fbm(vec2(rI.x*0.0015,rI.y*0.02));
+    float nR=0.55+0.6*fbm(vec2(X.x*0.03+X.y*0.004,X.y*0.0012+uTime*0.15));
+    float nS=0.7+0.4*fbm(X*0.006+vec2(0.,uTime*0.03));
+    float ec=2.5e4*qc*ncl,ei=8.0e3*qi*nI,er=1.2e3*qr*nR,es=2.5e3*qs*nS;float et=ec+ei+er+es;
+    float alpha=1.-exp(-et*uLy);
+    float tau=0.;float ds=200.;for(int i=1;i<=12;i++){vec2 q=pc+sunDir*(ds*float(i))/uDx;if(q.y>float(uN.y)||q.x<0.||q.x>float(uN.x))break;tau+=ext(sampM(uHy,q,vec4(0)))*ds;}
+    tau+=ext(H)*uLy*0.5;
+    float lit=0.30+0.70*exp(-tau*0.005);
+    vec3 amb=mix(vec3(0.56,0.61,0.70),sky,0.35)*(0.2+0.8*day);
+    vec3 wc=vec3(1.0),wi=vec3(0.90,0.95,1.0),wr=vec3(0.56,0.61,0.69),ws=vec3(0.90,0.91,0.95);
+    if(uStyle==1){wi=vec3(0.72,0.78,1.0);wr=vec3(0.35,0.55,0.95);ws=vec3(0.75,0.95,0.98);}
+    vec3 tint=(wc*ec+wi*ei+wr*er+ws*es)/max(et,1e-9);
+    vec3 cl=tint*mix(amb,sunCol*1.02,lit*day);
+    cl+=sunCol*day*0.10*pow(1.-alpha,2.)*exp(-tau*0.004);
+    col=mix(col,cl,alpha);
+   }
+  }
+ }
+ if(!solid(c)){
+  if(uOverlay>0){float val=fieldAt(uOverlay,pc,c,b);float t=(val-uRange.x)/(uRange.y-uRange.x);vec3 cm=cmap(t);col=mix(col,cm,uOvAlpha);
+   if(uContours>0.){float ft=abs(fract(t*uContours+0.5)-0.5)/max(fwidth(t*uContours),1e-4);col*=1.-0.45*(1.-smoothstep(0.,1.2,ft));}
+   vec4 H=sampM(uHy,pc,vec4(0));float qcl=H.x+H.z+0.4*H.w+0.15*H.y;float a=1.-exp(-1.5e5*qcl*uLy*0.5);
+   float edge=abs(a-0.2)/max(fwidth(a),1e-4);col=mix(col,vec3(1.),0.65*(1.-smoothstep(0.,1.2,edge)));col=mix(col,vec3(1.),a*0.28);}
+  if(uCont1>0){float v=fieldAt(uCont1,pc,c,b);float l=cline(v,uCont1Int);col=mix(col,vec3(0.97,0.98,1.0),0.8*l);
+   if(uCont1==1){float z0=zline(v);col=mix(col,vec3(0.45,0.8,1.0),0.95*z0);}}
+  if(uCont2>0){float v=fieldAt(uCont2,pc,c,b);float l=cline(v,uCont2Int);vec3 cc2=(v<0.)?vec3(0.4,0.65,1.0):vec3(1.0,0.6,0.25);col=mix(col,cc2,0.85*l);
+   if(uCont2==1){float z0=zline(v);col=mix(col,vec3(0.45,0.8,1.0),0.95*z0);}}
+ }
+ if(uArt>0.5){
+  float e=uSun.x;float day=smoothstep(-0.12,0.12,e);
+  if(uv0.y>1.){float t=clamp((uv0.y-1.)*1.5,0.,1.);vec3 zen=mix(vec3(0.010,0.016,0.045),vec3(0.14,0.34,0.72),smoothstep(-0.18,0.32,e));col=mix(col,zen*0.55,t);
+   if(e<0.05){float st=h21(floor(px*0.7));float tw=0.5+0.5*sin(uTime*2.+st*40.);col+=vec3(0.9,0.95,1.)*step(0.997,st)*tw*(1.-day)*0.8;}}
+  if(uv0.y<0.){float t=clamp(-uv0.y*3.,0.,1.);col=mix(col,col*0.35,t);}
+  vec2 vv=(px/uCanvas-0.5)*vec2(1.,1.15);float vig=1.-0.38*smoothstep(0.35,0.95,length(vv)*1.35);col*=vig;
+  col+=(h21(px+fract(uTime*0.1)*13.)-0.5)*0.018;
+  col=pow(max(col,0.),vec3(0.98));}
+ o=vec4(col,1.);}`;
+
+// ------------------------------------------------------------
+// GL helpers
+// ------------------------------------------------------------
+function compile(type,src,name){const s=gl.createShader(type);gl.shaderSource(s,src);gl.compileShader(s);
+ if(!gl.getShaderParameter(s,gl.COMPILE_STATUS)){const log=gl.getShaderInfoLog(s);fatal('['+name+'] shader compile error:\n'+log);throw new Error(log);}return s;}
+function program(vs,fs,name){const p=gl.createProgram();gl.attachShader(p,compile(gl.VERTEX_SHADER,vs,name+'.vs'));gl.attachShader(p,compile(gl.FRAGMENT_SHADER,fs,name+'.fs'));gl.linkProgram(p);
+ if(!gl.getProgramParameter(p,gl.LINK_STATUS)){const log=gl.getProgramInfoLog(p);fatal('['+name+'] link error:\n'+log);throw new Error(log);}
+ const u={};const n=gl.getProgramParameter(p,gl.ACTIVE_UNIFORMS);for(let i=0;i<n;i++){const info=gl.getActiveUniform(p,i);const nm=info.name.replace(/\[0\]$/,'');u[nm]={loc:gl.getUniformLocation(p,info.name),type:info.type,size:info.size};}
+ return {prog:p,u};}
+let texId=0;
+function mkTex(w,h,data){const t=gl.createTexture();gl.bindTexture(gl.TEXTURE_2D,t);gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA32F,w,h,0,gl.RGBA,gl.FLOAT,data||null);
+ gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MIN_FILTER,gl.NEAREST);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MAG_FILTER,gl.NEAREST);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_S,gl.CLAMP_TO_EDGE);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_T,gl.CLAMP_TO_EDGE);
+ return {tex:t,w,h,id:texId++};}
+function upload(T,data){gl.bindTexture(gl.TEXTURE_2D,T.tex);gl.texSubImage2D(gl.TEXTURE_2D,0,0,0,T.w,T.h,gl.RGBA,gl.FLOAT,data);}
+function delTex(T){if(T){gl.deleteTexture(T.tex);}}
+const fboCache=new Map();
+function fboFor(targets){const key=targets.map(t=>t.id).join(',');let f=fboCache.get(key);if(f)return f;
+ f=gl.createFramebuffer();gl.bindFramebuffer(gl.FRAMEBUFFER,f);const bufs=[];targets.forEach((t,i)=>{gl.framebufferTexture2D(gl.FRAMEBUFFER,gl.COLOR_ATTACHMENT0+i,gl.TEXTURE_2D,t.tex,0);bufs.push(gl.COLOR_ATTACHMENT0+i);});gl.drawBuffers(bufs);
+ const st=gl.checkFramebufferStatus(gl.FRAMEBUFFER);if(st!==gl.FRAMEBUFFER_COMPLETE)fatal('FBO incomplete: '+st);fboCache.set(key,f);return f;}
+function clearFboCache(){for(const f of fboCache.values())gl.deleteFramebuffer(f);fboCache.clear();}
+function setU(p,name,v){const info=p.u[name];if(!info)return;const t=info.type;
+ if(t===gl.FLOAT)gl.uniform1f(info.loc,v);else if(t===gl.INT||t===gl.BOOL)gl.uniform1i(info.loc,v);
+ else if(t===gl.FLOAT_VEC2)gl.uniform2fv(info.loc,v);else if(t===gl.FLOAT_VEC4)gl.uniform4fv(info.loc,v);else if(t===gl.INT_VEC2)gl.uniform2iv(info.loc,v);else if(t===gl.FLOAT_VEC3)gl.uniform3fv(info.loc,v);}
+function draw(p,uni,targets,vp,prim,count){gl.useProgram(p.prog);let unit=0;
+ for(const k in uni){const info=p.u[k];if(!info)continue;const v=uni[k];
+  if(v&&v.tex!==undefined){gl.activeTexture(gl.TEXTURE0+unit);gl.bindTexture(gl.TEXTURE_2D,v.tex);gl.uniform1i(info.loc,unit);unit++;}else setU(p,k,v);}
+ if(targets){gl.bindFramebuffer(gl.FRAMEBUFFER,fboFor(targets));gl.viewport(vp?vp[0]:0,vp?vp[1]:0,vp?vp[2]:targets[0].w,vp?vp[3]:targets[0].h);}
+ else{gl.bindFramebuffer(gl.FRAMEBUFFER,null);gl.viewport(0,0,canvas.width,canvas.height);}
+ gl.drawArrays(prim||gl.TRIANGLES,0,count||3);}
+
+const P={};
+function buildPrograms(){
+ P.mask=program(VS_FS,FS_MASK,'mask');P.adv=program(VS_FS,FS_ADV,'advect');P.mc=program(VS_FS,FS_MC,'maccormack');P.force=program(VS_FS,FS_FORCE,'forces');
+ P.micro=program(VS_FS,FS_MICRO,'micro');P.div=program(VS_FS,FS_DIV,'div');P.jac=program(VS_FS,FS_JAC,'jacobi');P.grad=program(VS_FS,FS_GRAD,'grad');P.splat=program(VS_FS,FS_SPLAT,'splat');P.jacw=program(VS_FS,FS_JACW,'jacw');P.pin=program(VS_FS,FS_PIN,'pin');P.resid=program(VS_FS,FS_RESID,'resid');P.restrict=program(VS_FS,FS_RESTRICT,'restrict');P.prolong=program(VS_FS,FS_PROLONG,'prolong');P.maskdown=program(VS_FS,FS_MASKDOWN,'maskdown');
+ P.part=program(VS_FS,FS_PART,'particles');P.trail=program(VS_FS,FS_TRAIL,'trail');P.point=program(VS_POINT,FS_POINT,'point');P.line=program(VS_LINE,FS_LINE,'line');P.arrow=program(VS_ARROW,FS_ARROW,'arrow');P.render=program(VS_FS,FS_RENDER,'render');}
+buildPrograms();
+
+// ------------------------------------------------------------
+// Physics helpers (CPU side)
+// ------------------------------------------------------------
+const Rd=287.04,cpA=1004.5,g0=9.81,p00=1e5;
+const esw=T=>611.2*Math.exp(17.67*(T-273.15)/(T-29.65));
+const esi=T=>611.2*Math.exp(22.46*(T-273.15)/(T-0.53));
+const qsat=(es,p)=>0.622*es/Math.max(p-es,1);
+
+// ------------------------------------------------------------
+// Model state
+// ------------------------------------------------------------
+const MATS=[{n:'海',c:'#1a4a74',T:22,b:1.0},{n:'草地',c:'#4d6b38',T:30,b:0.35},{n:'森林',c:'#274a29',T:27,b:0.5},{n:'砂漠・岩',c:'#a88f66',T:40,b:0.03},{n:'雪氷',c:'#e6eaf2',T:-2,b:0.2},{n:'都市',c:'#6b6b75',T:36,b:0.1},{n:'煙突 (排気)',c:'#8a5a3a',T:38,b:1.0}];
+const GRIDS=[[384,128],[576,192],[768,256],[1152,384],[1536,512],[2304,768]];
+const S={
+ nx:768,nz:256,Lx:48000,Lz:16000,dx:62.5,dt:2.0,substeps:2,jacobi:6,vcycles:2,mode:0,lat:0,mg:{nu1:3,nu2:3,pw:0.7,maxL:99,coarse:24}, // pw<1: 地形まわりで粗格子補正が過剰になり発散する (2026-09-25 実測: pw=1 で残差が毎サイクル 2-3 倍) — 戻すな
+ env:{sfcT:25,lapse:6.5,tropo:11000,strat:1.0,rhSfc:0.7,rhTop:0.3,invZ:0,invDT:0,layers:[]},
+ streams:[],islands:[],
+ num:{nu:1.0,cs:0.17,spH:0.14,spRate:0.02,latW:2500,latTau:60,nudgeTau:30,ch:1.5e-3,ce:1.5e-3,cd:2e-3,noise:0.02},
+ micro:{k1:1e-3,qc0:5e-4,k2:2.2,ke:1.0,tauF:600,tauDep:300,kis:1e-3,qi0:1e-4,ksc:1.0,tauMelt:100,ice:1,warm:1,radTop:1.5,radClr:1.5,evapWake:0.02,vsn:1.2,vic:0.35},
+ view:{overlay:0,cmap:0,range:[0,1],alpha:0.85,contours:0,cont1:0,cont1Int:10,cont2:0,cont2Int:2,arrows:0,arrowStride:16,style:0,Ly:280,sunElev:38,sunSide:-1,trailLen:120,showTrails:1,wx:1},
+ tool:'probe',brushR:2500,brushAmp:400,paintMat:1,bubbleAmp:2.5,bubbleR:1200,
+ playing:false,time:0,frame:0,fps:0,msPerStep:0,partHead:0,partN:1024,partH:240,partNext:0,sel:-1,art:false,artDiurnal:true,artPeriod:360,artT0:0,
+};
+const T={};  // textures
+let terrH,terrM,terrTsfc,terrBeta; // CPU terrain arrays
+let baseRow0,baseRow1;
+
+function allocTextures(){
+ for(const k in T)delTex(T[k]);clearFboCache();
+ const nx=S.nx,nz=S.nz;
+ T.velA=mkTex(nx,nz);T.velB=mkTex(nx,nz);T.thA=mkTex(nx,nz);T.thB=mkTex(nx,nz);T.hyA=mkTex(nx,nz);T.hyB=mkTex(nx,nz);
+ T.tmp1=mkTex(nx,nz);T.tmp2=mkTex(nx,nz);T.fall=mkTex(nx,nz);T.pA=mkTex(nx,nz);T.pB=mkTex(nx,nz);T.div=mkTex(nx,nz);T.mask=mkTex(nx,nz);
+ T.terr=mkTex(nx,1);T.base=mkTex(nz,2);
+ T.mg=[];let w=nx,h=nz;for(let l=1;;l++){if(w%2||h%2||(h>>1)<6)break;w>>=1;h>>=1;T.mg.push({w,h,p:mkTex(w,h),t:mkTex(w,h),b:mkTex(w,h),mask:mkTex(w,h)});}
+ T.partA=mkTex(S.partN,1,new Float32Array(S.partN*4));T.partB=mkTex(S.partN,1,new Float32Array(S.partN*4));T.trail=mkTex(S.partN,S.partH,new Float32Array(S.partN*S.partH*4));
+}
+function swap(a,b){const t=T[a];T[a]=T[b];T[b]=t;}
+
+// --- base state (hydrostatic reference)
+function T0z(z,env){let Tt=env.sfcT+273.15-env.lapse*Math.min(z,env.tropo)/1000+env.strat*Math.max(0,z-env.tropo)/1000;
+ if(env.invDT!==0&&env.invZ>0){const s=clamp((z-env.invZ)/300,0,1);Tt+=env.invDT*s*s*(3-2*s);}return Tt;}
+function RHz(z,env){let rh=z<env.tropo?env.rhSfc+(env.rhTop-env.rhSfc)*z/env.tropo:0.05;
+ for(const L of env.layers){const w=clamp((z-L.z0)/250,0,1)*(1-clamp((z-L.z1)/250,0,1));rh=rh*(1-w)+L.rh*w;}return rh;}
+function buildBase(){const nz=S.nz,dx=S.dx,env=S.env;baseRow0=new Float32Array(nz*4);baseRow1=new Float32Array(nz*4);
+ if(S.mode===1){const Tt=env.sfcT+273.15;const p=101325;const rho=p/(Rd*Tt);const pi=Math.pow(p/p00,0.2857);const th=Tt/pi;
+  for(let k=0;k<nz;k++){baseRow0.set([th,rho,pi,0],k*4);baseRow1.set([streamU(0,(k+0.5)*dx),0,0,0],k*4);}}
+ else{let p=101325,zp=0;const sub=10;
+  for(let k=0;k<nz;k++){const z=(k+0.5)*dx;const n=Math.max(1,Math.round((z-zp)/sub));const h=(z-zp)/n;
+   for(let i=0;i<n;i++){const zm=zp+(i+0.5)*h;p*=Math.exp(-g0*h/(Rd*T0z(zm,env)));}zp=z;
+   const Tt=T0z(z,env);const pi=Math.pow(p/p00,0.2857);const th=Tt/pi;const rho=p/(Rd*Tt);const qv=RHz(z,env)*qsat(esw(Tt),p);
+   baseRow0.set([th,rho,pi,qv],k*4);baseRow1.set([streamU(0,z),0,0,0],k*4);}}
+ const all=new Float32Array(nz*8);all.set(baseRow0,0);all.set(baseRow1,nz*4);upload(T.base,all);}
+function streamsAt(z){let W=null,E=null;for(const s of S.streams){if(z>=s.z0&&z<s.z1){if(s.side<0&&!W)W=s;if(s.side>0&&!E)E=s;}}return [W,E];}
+function streamU(x,z){const [W,E]=streamsAt(z);if(W&&E){const f=clamp((x-S.Lx/2)/3000+0.5,0,1);return W.u*(1-f)+E.u*f;}return W?W.u:(E?E.u:0);}
+function taper(st,z){const m=0.5*(st.z0+st.z1);const t=clamp((z-m)/(st.z1-m),0,1);return st.dT*(1-t*t*(3-2*t));}
+function streamMix(x,z){const [W,E]=streamsAt(z);if(W&&E){const f=clamp((x-S.Lx/2)/3000+0.5,0,1);const ff=f*f*(3-2*f);return {dT:taper(W,z)*(1-ff)+taper(E,z)*ff,rh:W.rh*(1-ff)+E.rh*ff,u:W.u*(1-ff)+E.u*ff};}
+ const s=W||E;return s?{dT:taper(s,z),rh:s.rh,u:s.u}:null;}
+
+// --- terrain
+function buildTerrainFromSpec(spec){const nx=S.nx;terrH=new Float32Array(nx);terrM=new Uint8Array(nx);
+ for(let i=0;i<nx;i++){const x=(i+0.5)*S.dx;let h=0;for(const m of (spec.mountains||[])){const xc=m.x*S.Lx;h+=m.h*Math.exp(-((x-xc)*(x-xc))/(m.w*m.w));}
+  if(spec.rough)h+=spec.rough*(0.5+0.5*Math.sin(x*0.0021)+0.4*Math.sin(x*0.0057+1.3));
+  let mat=spec.landMat===undefined?1:spec.landMat;
+  for(const r of (spec.sea||[])){if(x>=r[0]*S.Lx&&x<=r[1]*S.Lx){mat=0;h=0;}}
+  for(const ch of (spec.chimneys||[])){if(Math.abs(x-ch.x*S.Lx)<=ch.w/2){h=Math.max(h,ch.h);mat=6;}}
+  terrH[i]=Math.max(0,h);terrM[i]=mat;}
+ uploadTerrain();}
+function uploadTerrain(){const nx=S.nx;const d=new Float32Array(nx*4);for(let i=0;i<nx;i++){const m=MATS[terrM[i]];d[i*4]=terrH[i];d[i*4+1]=terrM[i];d[i*4+2]=m.T+273.15;d[i*4+3]=m.b;}
+ upload(T.terr,d);
+ const isl=new Float32Array(16);S.islands.slice(0,4).forEach((s,i)=>isl.set([s.x*S.Lx,s.y*S.Lz,s.rx,s.ry],i*4));
+ draw(P.mask,{uN:[S.nx,S.nz],uDx:S.dx,uMode:S.mode,uTerr:T.terr,uIsl:isl,uNIsl:Math.min(4,S.islands.length)},[T.mask]);
+ let fm=T.mask;for(const L of T.mg){draw(P.maskdown,{uFineMask:fm},[L.mask]);fm=L.mask;}}
+
+// --- initial fields
+function initFields(){const nx=S.nx,nz=S.nz,dx=S.dx;const vel=new Float32Array(nx*nz*4),th=new Float32Array(nx*nz*4),hy=new Float32Array(nx*nz*4);
+ let seed=12345;const rnd=()=>{seed=(seed*1664525+1013904223)>>>0;return seed/4294967296;};
+ for(let k=0;k<nz;k++){const z=(k+0.5)*dx;const b0=baseRow0.subarray(k*4,k*4+4);const th0=b0[0],pi0=b0[2],qv0=b0[3];const p=p00*Math.pow(pi0,3.5);
+  for(let i=0;i<nx;i++){const x=(i+0.5)*dx;const o=(k*nx+i)*4;let u=0,tt=th0,qv=qv0;
+   const sm=S.mode===1?{u:streamU(x,z),dT:0,rh:-1}:streamMix(x,z);
+   if(sm){u=sm.u;tt=th0+sm.dT/pi0;const Tt=tt*pi0;qv=sm.rh<0?qv0:sm.rh*qsat(esw(Tt),p);}
+   if(S.mode===0&&z<1500)tt+=(rnd()-0.5)*0.4;
+   vel[o]=u;th[o]=tt;th[o+1]=qv;
+   if(S.mode===1){hy[o]=(S.deckQc||4e-4)*(0.85+0.3*rnd());}
+  }}
+ upload(T.velA,vel);upload(T.velB,vel);upload(T.thA,th);upload(T.thB,th);upload(T.hyA,hy);upload(T.hyB,hy);
+ const z0=new Float32Array(nx*nz*4);upload(T.pA,z0);upload(T.pB,z0);upload(T.fall,z0);
+ S.time=0;S.frame=0;clearParticles();}
+
+function clearParticles(){const z=new Float32Array(S.partN*4);upload(T.partA,z);upload(T.partB,z);upload(T.trail,new Float32Array(S.partN*S.partH*4));S.partNext=0;S.sel=-1;S.partHead=0;selHist=[];}
+function addParticle(x,z,kind){const i=S.partNext;S.partNext=(S.partNext+1)%S.partN;
+ const d=new Float32Array([x,z,kind===2?1e-6:0,kind]);gl.bindTexture(gl.TEXTURE_2D,T.partA.tex);gl.texSubImage2D(gl.TEXTURE_2D,0,i,0,1,1,gl.RGBA,gl.FLOAT,d);
+ gl.bindTexture(gl.TEXTURE_2D,T.partB.tex);gl.texSubImage2D(gl.TEXTURE_2D,0,i,0,1,1,gl.RGBA,gl.FLOAT,d);
+ const col=new Float32Array(S.partH*4);for(let j=0;j<S.partH;j++){col[j*4]=x;col[j*4+1]=z;col[j*4+2]=0;}
+ gl.bindTexture(gl.TEXTURE_2D,T.trail.tex);gl.texSubImage2D(gl.TEXTURE_2D,0,i,0,1,S.partH,gl.RGBA,gl.FLOAT,col);
+ S.sel=i;selHist=[];return i;}
+
+// ------------------------------------------------------------
+// Time stepping
+// ------------------------------------------------------------
+function common(){return {uN:[S.nx,S.nz],uDx:S.dx,uDt:S.dt,uMode:S.mode,uLat:S.lat,uBase:T.base,uMask:T.mask,uTerr:T.terr};}
+function advectMC(field,kind){ // field: 'vel'|'th'|'hy'
+ const A=T[field+'A'],B=T[field+'B'];const c=common();
+ draw(P.adv,{...c,uVel:T.velA,uSrc:A,uFallT:T.fall,uSign:1,uKind:kind},[T.tmp1]);
+ draw(P.adv,{...c,uVel:T.velA,uSrc:T.tmp1,uFallT:T.fall,uSign:-1,uKind:kind},[T.tmp2]);
+ draw(P.mc,{...c,uVel:T.velA,uPhi:A,uHat:T.tmp1,uBar:T.tmp2,uFallT:T.fall,uKind:kind},[B]);}
+// --- multigrid pressure solve: ∇²φ = ∇·(ρ0 v)
+function lvl(l){return l===0?{w:S.nx,h:S.nz,p:T.pA,t:T.pB,b:T.div,mask:T.mask}:T.mg[l-1];}
+function smooth(L,l,n){const c={uN:[L.w,L.h],uDx:S.dx*(1<<l),uDt:S.dt,uMode:S.mode,uLat:S.lat,uBase:T.base,uMask:L.mask,uTerr:T.terr};
+ for(let i=0;i<n;i++){draw(P.jacw,{...c,uP:L.p,uDiv:L.b,uOmega:0.8},[L.t]);const tmp=L.p;L.p=L.t;L.t=tmp;}}
+function vcycle(l,L){const nl=T.mg.length;const c={uN:[L.w,L.h],uDx:S.dx*(1<<l),uDt:S.dt,uMode:S.mode,uLat:S.lat,uBase:T.base,uMask:L.mask,uTerr:T.terr};
+ if(l===nl||l>=S.mg.maxL){smooth(L,l,S.mg.coarse);return;}
+ smooth(L,l,S.mg.nu1);draw(P.resid,{...c,uP:L.p,uDiv:L.b},[L.t]);
+ const C=lvl(l+1);const cc={uN:[C.w,C.h],uDx:S.dx*(1<<(l+1)),uDt:S.dt,uMode:S.mode,uLat:S.lat,uBase:T.base,uMask:C.mask,uTerr:T.terr};
+ draw(P.restrict,{...cc,uFine:L.t,uFineMask:L.mask},[C.b]);gl.bindFramebuffer(gl.FRAMEBUFFER,fboFor([C.p]));gl.clearColor(0,0,0,0);gl.clear(gl.COLOR_BUFFER_BIT);
+ vcycle(l+1,C);
+ draw(P.prolong,{...c,uP:L.p,uCoarse:C.p,uCoarseMask:C.mask,uNc:[C.w,C.h],uPw:S.mg.pw},[L.t]);const tmp=L.p;L.p=L.t;L.t=tmp;
+ smooth(L,l,S.mg.nu2);}
+function pressureSolve(){const c=common();draw(P.div,{...c,uVel:T.velA},[T.div]);
+ for(let v=0;v<S.vcycles;v++){const L0=lvl(0);vcycle(0,L0);T.pA=L0.p;T.pB=L0.t;}
+ for(let i=0;i<S.jacobi;i++){draw(P.jac,{...c,uP:T.pA,uDiv:T.div},[T.pB]);swap('pA','pB');}
+ if(S.lat!==0){draw(P.pin,{...c,uP:T.pA,uRef:[S.nx>>1,S.nz-2]},[T.pB]);swap('pA','pB');}
+ draw(P.grad,{...c,uP:T.pA,uVel:T.velA},[T.velB]);swap('velA','velB');}
+function airUniforms(){const a=new Float32Array(32),b=new Float32Array(32);S.streams.slice(0,8).forEach((s,i)=>{a.set([s.side,s.z0,s.z1,s.u],i*4);b.set([s.dT,s.rh,1,0],i*4);});return {uAirA:a,uAirB:b,uNAir:Math.min(8,S.streams.length)};}
+function step(){const c=common(),n=S.num,m=S.micro;
+ // advection (velocity first, using pre-step velocity for all)
+ advectMC('th',1);advectMC('hy',2);advectMC('vel',0);
+ swap('velA','velB');swap('thA','thB');swap('hyA','hyB');
+ draw(P.force,{...c,uVel:T.velA,uTh:T.thA,uHy:T.hyA,uG:S.mode===0?g0:0,uNu:n.nu,uCs:n.cs,uSpH:S.mode===0?n.spH:0,uSpRate:n.spRate,uLatW:n.latW,uLatTau:n.latTau,uNudgeTau:n.nudgeTau,
+  uCh:n.ch,uCe:n.ce,uCd:n.cd,uRadTop:S.mode===0?m.radTop/3600:0,uRadClr:S.mode===0?m.radClr/86400:0,uNoise:n.noise,uTime:S.time,...airUniforms()},[T.velB,T.thB]);
+ swap('velA','velB');swap('thA','thB');
+ draw(P.micro,{...c,uTh:T.thA,uHy:T.hyA,uK1:m.k1,uQc0:m.qc0,uK2:m.k2,uKe:m.ke,uTauF:m.tauF,uTauDep:m.tauDep,uKis:m.kis,uQi0:m.qi0,uKsc:m.ksc,uTauMelt:m.tauMelt,uIceOn:m.ice,uWarmOn:m.warm,uEvapWake:m.evapWake,uVsn:m.vsn,uVic:m.vic},[T.thB,T.hyB,T.fall]);
+ swap('thA','thB');swap('hyA','hyB');
+ pressureSolve();
+ // particles
+ draw(P.part,{...c,uPart:T.partA,uVel:T.velA,uTh:T.thA,uHy:T.hyA},[T.partB],[0,0,S.partN,1]);swap('partA','partB');
+ S.partHead=(S.partHead+1)%S.partH;draw(P.trail,{uPart:T.partA},[T.trail],[0,S.partHead,S.partN,1]);
+ S.time+=S.dt;S.frame++;}
+
+// ------------------------------------------------------------
+// Rendering
+// ------------------------------------------------------------
+const hud=$('#hud'),hctx=hud.getContext('2d');
+let rect={x:0,y:0,w:1,h:1};let dpr=1;
+function resize(){dpr=Math.min(window.devicePixelRatio||1,1.6);const W=window.innerWidth,H=window.innerHeight;canvas.width=Math.round(W*dpr);canvas.height=Math.round(H*dpr);hud.width=canvas.width;hud.height=canvas.height;
+ const panelOpen=!$('#panel').classList.contains('hidden');const mobile=window.innerWidth<=820;
+ const stackH=mobile?0:(($('#stack')&&$('#stack').offsetHeight)||0);const padL=58,padB=mobile?24:58,padT=parseInt(getComputedStyle(document.documentElement).getPropertyValue('--topH'))+(mobile?14:stackH+26),padR=(panelOpen&&!mobile)?parseInt(getComputedStyle(document.documentElement).getPropertyValue('--panelW'))+16:16;
+ const availW=W-padL-padR,availH=H-padT-padB-(mobile&&panelOpen?H*0.52:0);const asp=S.Lx/S.Lz;let w=availW,h=w/asp;if(h>availH){h=availH;w=h*asp;}
+ let x=padL+(availW-w)/2,yTop=padT+(availH-h)/2;
+ if(S.art){w=W;h=W/asp;if(h>H*0.92){h=H*0.92;w=h*asp;}x=(W-w)/2;yTop=H*0.56-h/2;}
+ rect={x,y:H-yTop-h,w,h};}
+window.addEventListener('resize',resize);
+const OVERLAYS=[['なし',null,0,1],['気温 T [°C]',[-60,40],3,10],['温位 θ [K]',[280,420],0,5],['相対湿度 (水) RH [%]',[0,100],0,20],['相対湿度 (氷) RHi [%]',[0,140],0,20],['水蒸気 q_v [g/kg]',[0,20],0,2],['鉛直速度 w [m/s]',[-15,15],3,2],['風速 |v| [m/s]',[0,40],2,5],['水平風 u [m/s]',[-30,30],3,5],['渦度 ζ [1/s]',[-0.02,0.02],3,0.005],['浮力 B [m/s²]',[-0.1,0.1],3,0.02],['雲水 q_c [g/kg]',[0,3],0,0.5],['雨水 q_r [g/kg]',[0,5],1,0.5],['雲氷 q_i [g/kg]',[0,0.5],0,0.05],['雪 q_s [g/kg]',[0,2],0,0.2],['圧力摂動 φ [m²/s²]',[-3000,3000],3,500],['相当温位 θ_e [K]',[290,380],2,5]];
+function render(){const v=S.view;const rp=[rect.x*dpr,rect.y*dpr,rect.w*dpr,rect.h*dpr];
+ if(S.art&&S.artDiurnal){const h=((performance.now()-S.artT0)/1000/S.artPeriod)%1;const ang=2*Math.PI*h;S.view.sunElev=-8+78*Math.max(-0.12,Math.sin(ang));S.view.sunSide=Math.cos(ang)>0?-1:1;}
+ draw(P.render,{...common(),uVel:T.velA,uTh:T.thA,uHy:T.hyA,uP:T.pA,uRect:rp,uCanvas:[canvas.width,canvas.height],uSun:[v.sunElev*Math.PI/180,v.sunSide],uOverlay:v.overlay,uCmap:v.cmap,uRange:v.range,uOvAlpha:v.alpha,uContours:v.contours,uCont1:v.cont1,uCont1Int:v.cont1Int,uCont2:v.cont2,uCont2Int:v.cont2Int,uLy:v.Ly,uTime:S.time,uStyle:v.style,uArt:S.art?1:0},null);
+ gl.enable(gl.BLEND);gl.blendFunc(gl.SRC_ALPHA,gl.ONE_MINUS_SRC_ALPHA);
+ if(v.arrows){const st=v.arrowStride;const nxs=Math.ceil(S.nx/st),nzs=Math.ceil(S.nz/st);gl.useProgram(P.arrow.prog);
+  gl.activeTexture(gl.TEXTURE0);gl.bindTexture(gl.TEXTURE_2D,T.velA.tex);gl.uniform1i(P.arrow.u.uVel.loc,0);gl.activeTexture(gl.TEXTURE1);gl.bindTexture(gl.TEXTURE_2D,T.mask.tex);gl.uniform1i(P.arrow.u.uMask.loc,1);
+  setU(P.arrow,'uN',[S.nx,S.nz]);setU(P.arrow,'uStride',st);setU(P.arrow,'uRect',rp);setU(P.arrow,'uCanvas',[canvas.width,canvas.height]);setU(P.arrow,'uVmax',OVERLAYS[7][1][1]);
+  gl.bindFramebuffer(gl.FRAMEBUFFER,null);gl.viewport(0,0,canvas.width,canvas.height);gl.drawArraysInstanced(gl.LINES,0,6,nxs*nzs);}
+ if(v.showTrails){gl.useProgram(P.line.prog);gl.activeTexture(gl.TEXTURE0);gl.bindTexture(gl.TEXTURE_2D,T.trail.tex);gl.uniform1i(P.line.u.uTrail.loc,0);gl.activeTexture(gl.TEXTURE1);gl.bindTexture(gl.TEXTURE_2D,T.partA.tex);gl.uniform1i(P.line.u.uPart.loc,1);
+  setU(P.line,'uH',S.partH);setU(P.line,'uHead',S.partHead);setU(P.line,'uSel',S.sel);setU(P.line,'uRect',rp);setU(P.line,'uCanvas',[canvas.width,canvas.height]);setU(P.line,'uDom',[S.Lx,S.Lz]);setU(P.line,'uLen',Math.min(v.trailLen,S.partH-1));
+  gl.bindFramebuffer(gl.FRAMEBUFFER,null);gl.viewport(0,0,canvas.width,canvas.height);gl.drawArrays(gl.LINES,0,S.partN*(S.partH-1)*2);}
+ gl.useProgram(P.point.prog);gl.activeTexture(gl.TEXTURE0);gl.bindTexture(gl.TEXTURE_2D,T.partA.tex);gl.uniform1i(P.point.u.uPart.loc,0);
+ setU(P.point,'uRect',rp);setU(P.point,'uCanvas',[canvas.width,canvas.height]);setU(P.point,'uDom',[S.Lx,S.Lz]);setU(P.point,'uPx',dpr);setU(P.point,'uSel',S.sel);
+ gl.bindFramebuffer(gl.FRAMEBUFFER,null);gl.viewport(0,0,canvas.width,canvas.height);gl.drawArrays(gl.POINTS,0,S.partN);
+ gl.disable(gl.BLEND);
+ drawHud();}
+function drawHud(){const c=hctx;c.setTransform(dpr,0,0,dpr,0,0);c.clearRect(0,0,hud.width,hud.height);
+ if(S.art){const t=S.time;$('#artName').textContent=PRESETS[+$('#preset').value].n.split(' — ')[0];$('#artTime').textContent=`${String(Math.floor(t/3600)).padStart(2,'0')}:${String(Math.floor(t/60)%60).padStart(2,'0')}  ·  太陽高度 ${S.view.sunElev.toFixed(0)}°`;return;}const H=window.innerHeight;const x0=rect.x,y0=H-rect.y-rect.h,w=rect.w,h=rect.h;
+ c.strokeStyle='rgba(180,200,230,0.35)';c.lineWidth=1;c.strokeRect(x0-0.5,y0-0.5,w+1,h+1);
+ c.font='10px "IBM Plex Mono",monospace';c.fillStyle='rgba(200,214,235,0.85)';c.textAlign='right';c.textBaseline='middle';
+ const kmZ=S.Lz/1000,stepZ=kmZ>20?5:(kmZ>8?2:1);for(let z=0;z<=kmZ+1e-6;z+=stepZ){const y=y0+h-(z/kmZ)*h;c.fillRect(x0-6,y-0.5,6,1);c.fillText(z.toFixed(0),x0-9,y);}
+ c.save();c.translate(x0-40,y0+h/2);c.rotate(-Math.PI/2);c.textAlign='center';c.fillStyle='rgba(160,180,210,0.9)';c.fillText('高度 [km]',0,0);c.restore();
+ c.textAlign='center';c.textBaseline='top';const kmX=S.Lx/1000,stepX=kmX>60?10:5;for(let x=0;x<=kmX+1e-6;x+=stepX){const px=x0+(x/kmX)*w;c.fillRect(px-0.5,y0+h+8,1,5);c.fillText(x.toFixed(0),px,y0+h+14);}
+ c.fillStyle='rgba(160,180,210,0.9)';c.fillText('水平距離 [km]',x0+w/2,y0+h+28);
+ // 気流の矢印 (境界の前提条件を可視化)
+ if(S.lat===0){c.font='10px "IBM Plex Mono",monospace';for(const st of S.streams){const dir=st.side<0?1:-1;const bx=st.side<0?x0+6:x0+w-6;const yA=y0+h-(Math.min(st.z1,S.Lz)/S.Lz)*h,yB=y0+h-(st.z0/S.Lz)*h;
+   c.fillStyle='rgba(242,180,107,0.10)';c.fillRect(st.side<0?x0:x0+w-34,yA,34,yB-yA);c.strokeStyle='rgba(242,180,107,0.9)';c.lineWidth=1.2;
+   const n=Math.max(1,Math.min(6,Math.round((yB-yA)/40)));for(let k=0;k<n;k++){const yy=yA+(yB-yA)*(k+0.5)/n;const L=8+16*Math.min(1,Math.abs(st.u)/30);c.beginPath();c.moveTo(bx,yy);c.lineTo(bx+dir*L,yy);c.lineTo(bx+dir*(L-4),yy-3);c.moveTo(bx+dir*L,yy);c.lineTo(bx+dir*(L-4),yy+3);c.stroke();}
+   c.fillStyle='rgba(255,226,184,0.95)';c.textAlign=st.side<0?'left':'right';c.textBaseline='middle';const lab=`${Math.abs(st.u)} m/s${st.dT?` ΔT${st.dT>0?'+':''}${st.dT}K`:''}${st.rh>=0?` RH${Math.round(st.rh*100)}%`:''}`;c.fillText(lab,st.side<0?x0+38:x0+w-38,(yA+yB)/2);}}
+ else{c.fillStyle='rgba(242,180,107,0.9)';c.font='10px "IBM Plex Mono",monospace';c.textAlign='center';c.textBaseline='bottom';c.fillText(S.lat===1?'⟲ 周期境界 (右端 = 左端)':'▌閉鎖境界 (壁)▐',x0+w/2,y0-3);}
+ // 地上天気の帯
+ if(S.view.wx&&surfWx){const nx=S.nx;const cw=w/nx;c.fillStyle='rgba(0,0,0,0.35)';c.fillRect(x0,y0+h+1,w,7);
+  for(let i=0;i<nx;i++){const R=surfWx[i*2],Sn=surfWx[i*2+1];if(R<0.05&&Sn<0.05)continue;const inten=Math.min(1,0.25+0.75*Math.log10(1+Math.max(R,Sn))/1.7);
+   let col;if(Sn>R*1.5)col=`rgba(240,244,255,${inten})`;else if(R>Sn*1.5)col=`rgba(70,140,255,${inten})`;else col=`rgba(170,120,255,${inten})`;c.fillStyle=col;c.fillRect(x0+i*cw,y0+h+1,Math.max(cw,1),7);}
+}
+ // 凡例の追記
+ const ex=legendExtra();if(ex.length){c.fillStyle='rgba(200,214,235,0.9)';c.font='10px "IBM Plex Mono",monospace';c.textAlign='right';c.textBaseline='top';ex.forEach((t,k)=>c.fillText(t,x0+w-4,y0+4+k*13));}
+ if(S.mode===0){const e=S.view.sunElev*Math.PI/180;const sx=S.view.sunSide<0?x0+18:x0+w-18;const sy=y0+18;c.strokeStyle='rgba(242,180,107,0.8)';c.beginPath();c.moveTo(sx,sy);c.lineTo(sx-Math.cos(e)*S.view.sunSide*22,sy+Math.sin(e)*22);c.stroke();c.fillStyle='rgba(242,180,107,0.9)';c.beginPath();c.arc(sx,sy,3.5,0,Math.PI*2);c.fill();}
+ // brush preview
+ if((S.tool==='raise'||S.tool==='paint')&&mouse.inside&&S.mode===0){const r=S.brushR/S.Lx*w;c.strokeStyle='rgba(242,180,107,0.7)';c.setLineDash([4,4]);c.beginPath();c.moveTo(mouse.px-r,y0);c.lineTo(mouse.px-r,y0+h);c.moveTo(mouse.px+r,y0);c.lineTo(mouse.px+r,y0+h);c.stroke();c.setLineDash([]);}
+ if(S.tool==='bubble'&&mouse.inside){const r=S.bubbleR/S.Lx*w;c.strokeStyle='rgba(242,180,107,0.7)';c.setLineDash([4,4]);c.beginPath();c.arc(mouse.px,mouse.py,r,0,Math.PI*2);c.stroke();c.setLineDash([]);}
+}
+
+// ------------------------------------------------------------
+// Readbacks: cursor, tracer, observations
+// ------------------------------------------------------------
+const px1=new Float32Array(4);
+function readCell(tex,i,k){gl.bindFramebuffer(gl.FRAMEBUFFER,fboFor([tex]));gl.readPixels(i,k,1,1,gl.RGBA,gl.FLOAT,px1);return px1;}
+function cellInfo(i,k){const b=baseRow0.subarray(k*4,k*4+4);const th0=b[0],pi0=b[2];const p=p00*Math.pow(pi0,3.5);
+ const t=Array.from(readCell(T.thA,i,k));const h=Array.from(readCell(T.hyA,i,k));const v=Array.from(readCell(T.velA,i,k));const m=readCell(T.mask,i,k)[0];
+ const Tk=t[0]*pi0;return {solid:m>0.5,T:Tk-273.15,th:t[0],qv:t[1],rh:100*t[1]/qsat(esw(Tk),p),rhi:100*t[1]/qsat(esi(Tk),p),qc:h[0],qr:h[1],qi:h[2],qs:h[3],u:v[0],w:v[1],p};}
+const mouse={x:0,y:0,px:0,py:0,inside:false,down:false,shift:false};
+function domainXY(clientX,clientY){const H=window.innerHeight;const x=(clientX-rect.x)/rect.w*S.Lx;const z=(H-clientY-rect.y)/rect.h*S.Lz;return [x,z];}
+let lastCursor=0;
+function updateCursor(){if(!mouse.inside||window.innerWidth<=820){$('#cursor').innerHTML='<span class="k">ドメイン上にカーソルを置くと値を表示</span>';return;}
+ const [x,z]=domainXY(mouse.x,mouse.y);const i=clamp(Math.floor(x/S.dx),0,S.nx-1),k=clamp(Math.floor(z/S.dx),0,S.nz-1);const c=cellInfo(i,k);
+ const f=(v,d=1)=>v.toFixed(d);let html=`<span class="k">x</span><span>${f(x/1000,2)} km</span><span class="k">${S.mode===1?'y':'z'}</span><span>${f(z/1000,2)} km</span>`;
+ if(c.solid){html+=`<span class="k">地形</span><span>${S.mode===1?'島':MATS[terrM[i]].n}</span><span class="k">h</span><span>${f(terrH[i],0)} m</span>`;}
+ else{html+=`<span class="k">T</span><span>${f(c.T)} °C</span><span class="k">θ</span><span>${f(c.th)} K</span><span class="k">RH</span><span>${f(c.rh,0)} %</span><span class="k">RHi</span><span>${f(c.rhi,0)} %</span>
+ <span class="k">q_v</span><span>${f(c.qv*1e3,2)} g/kg</span><span class="k">q_c</span><span>${f(c.qc*1e3,2)}</span><span class="k">q_r</span><span>${f(c.qr*1e3,2)} g/kg</span><span class="k">q_i</span><span>${f(c.qi*1e3,3)}</span>
+ <span class="k">q_s</span><span>${f(c.qs*1e3,2)} g/kg</span><span class="k">u</span><span>${f(c.u)} m/s</span><span class="k">w</span><span>${f(c.w,2)} m/s</span><span class="k">p</span><span>${f(c.p/100,0)} hPa</span>`;}
+ $('#cursor').innerHTML=html;}
+let partBuf=new Float32Array(S.partN*4);let selHist=[];
+function readParticles(){gl.bindFramebuffer(gl.FRAMEBUFFER,fboFor([T.partA]));gl.readPixels(0,0,S.partN,1,gl.RGBA,gl.FLOAT,partBuf);}
+function updateTracer(){const el=$('#tracer');if(S.sel<0){el.classList.remove('on');return;}const o=S.sel*4;const x=partBuf[o],z=partBuf[o+1],r=partBuf[o+2],st=partBuf[o+3];
+ if(st<0.5){el.classList.remove('on');return;}el.classList.add('on');
+ const i=clamp(Math.floor(x/S.dx),0,S.nx-1),k=clamp(Math.floor(z/S.dx),0,S.nz-1);const c=cellInfo(i,k);
+ const kind=st<1.5?'空気塊':(st<2.5?'雲粒 (液滴)':(st<3.5?'着地':'氷晶'));
+ let vt=0;if(st>1.5){vt=r<4e-5?1.19e8*r*r:(r<6e-4?8e3*r:2.01e3*Math.sqrt(r));if(st>3.5)vt*=0.35;}
+ const f=(v,d=1)=>v.toFixed(d);
+ $('#trG').innerHTML=`<span class="k">種別</span><span>${kind}</span><span class="k">高度</span><span>${f(z,0)} m</span><span class="k">x</span><span>${f(x/1000,2)} km</span><span class="k">T</span><span>${f(c.T)} °C</span><span class="k">RH / RHi</span><span>${f(c.rh,0)} / ${f(c.rhi,0)} %</span><span class="k">周囲 q_c</span><span>${f(c.qc*1e3,2)} g/kg</span><span class="k">w (空気)</span><span>${f(c.w,2)} m/s</span>`+(st>1.5?`<span class="k">半径 r</span><span>${r<1e-3?f(r*1e6,1)+' µm':f(r*1e3,2)+' mm'}</span><span class="k">終端速度</span><span>${f(vt,3)} m/s</span><span class="k">正味 w</span><span>${f(c.w-vt,2)} m/s</span>`:'');
+ if(S.playing||selHist.length===0){selHist.push([S.time,z,r]);if(selHist.length>400)selHist.shift();}
+ const sc=$('#spark'),cx=sc.getContext('2d');cx.clearRect(0,0,sc.width,sc.height);if(selHist.length>1){const t0=selHist[0][0],t1=selHist[selHist.length-1][0]||t0+1;let zmin=1e9,zmax=-1e9;for(const p of selHist){zmin=Math.min(zmin,p[1]);zmax=Math.max(zmax,p[1]);}zmin=Math.floor(zmin/500)*500;zmax=Math.ceil((zmax+1)/500)*500;
+  cx.strokeStyle='rgba(143,211,255,0.25)';cx.lineWidth=1;for(let zz=zmin;zz<=zmax;zz+=500){const y=sc.height-4-(zz-zmin)/(zmax-zmin)*(sc.height-8);cx.beginPath();cx.moveTo(0,y);cx.lineTo(sc.width,y);cx.stroke();}
+  cx.strokeStyle='#f2b46b';cx.lineWidth=2.5;cx.beginPath();selHist.forEach((p,j)=>{const X=(p[0]-t0)/Math.max(1,t1-t0)*sc.width;const Y=sc.height-4-(p[1]-zmin)/(zmax-zmin)*(sc.height-8);if(j===0)cx.moveTo(X,Y);else cx.lineTo(X,Y);});cx.stroke();
+  cx.fillStyle='rgba(200,214,235,0.9)';cx.font='16px "IBM Plex Mono",monospace';cx.textAlign='left';cx.fillText(`高度 ${(zmin/1000).toFixed(1)}–${(zmax/1000).toFixed(1)} km / ${((t1-t0)/60).toFixed(0)} 分`,6,18);}}
+
+let obsBuf=null,obsVel=null,lastObs=0,surfWx=null;
+function observe(){const nx=S.nx,nz=S.nz;if(!obsBuf||obsBuf.length!==nx*nz*4){obsBuf=new Float32Array(nx*nz*4);obsVel=new Float32Array(nx*nz*4);}
+ gl.bindFramebuffer(gl.FRAMEBUFFER,fboFor([T.hyA]));gl.readPixels(0,0,nx,nz,gl.RGBA,gl.FLOAT,obsBuf);gl.bindFramebuffer(gl.FRAMEBUFFER,fboFor([T.velA]));gl.readPixels(0,0,nx,nz,gl.RGBA,gl.FLOAT,obsVel);
+ let base=1e9,top=-1,wmax=0,wmin=0,liq=0,ice=0,rain=0,snow=0,qrmax=0,cover=0,rainCols=0;const colHas=new Uint8Array(nx);
+ for(let k=0;k<nz;k++){const z=(k+0.5)*S.dx;for(let i=0;i<nx;i++){const o=(k*nx+i)*4;const qc=obsBuf[o],qr=obsBuf[o+1],qi=obsBuf[o+2],qs=obsBuf[o+3];const w=obsVel[o+1];
+  if(qc+qi>2e-5){if(z<base)base=z;if(z>top)top=z;colHas[i]=1;}liq+=qc;ice+=qi+qs;rain+=qr;snow+=qs;if(qr>qrmax)qrmax=qr;if(w>wmax)wmax=w;if(w<wmin)wmin=w;
+  if(k===0&&qr+qs>1e-5)rainCols++;}}
+ for(let i=0;i<nx;i++)cover+=colHas[i];cover/=nx;
+ if(!surfWx||surfWx.length!==nx*2)surfWx=new Float32Array(nx*2);let wxRain=0,wxSnow=0,wxMix=0,wxRmax=0,wxSmax=0;
+ for(let i=0;i<nx;i++){const ks=Math.min(nz-1,Math.floor((terrH?terrH[i]:0)/S.dx)+(terrH&&terrH[i]>0?1:0));const o=(ks*nx+i)*4;const rho=baseRow0[ks*4+1];const qr=obsBuf[o+1],qs=obsBuf[o+3];
+  const Vr=qr>1e-9?36.34*Math.pow(rho*qr*1e-3,0.1364)*Math.sqrt(1.2/rho):0;const R=rho*qr*Vr*3600;const Sn=rho*qs*S.micro.vsn*Math.pow(1.2/rho,0.4)*3600;surfWx[i*2]=R;surfWx[i*2+1]=Sn;
+  if(R>0.05||Sn>0.05){if(Sn>R*1.5)wxSnow++;else if(R>Sn*1.5)wxRain++;else wxMix++;}wxRmax=Math.max(wxRmax,R);wxSmax=Math.max(wxSmax,Sn);}
+ const wxTxt=(wxRain+wxSnow+wxMix)===0?'降水なし':[wxRain?`雨 ${(wxRain/nx*100).toFixed(0)} % (最大 ${wxRmax.toFixed(1)} mm/h)`:'',wxSnow?`雪 ${(wxSnow/nx*100).toFixed(0)} % (最大 ${wxSmax.toFixed(1)} mm/h 水換算)`:'',wxMix?`みぞれ ${(wxMix/nx*100).toFixed(0)} %`:''].filter(Boolean).join(' · ');
+ const cls=classify({base,top,wmax,wmin,liq,ice,rain,cover,qrmax,rainCols:rainCols/nx});
+ const f=(v,d=1)=>v.toFixed(d);const g=$('#obsG');$('#obsCls').textContent=cls;
+ const rho=1.0;const Rmm=qrmax>0?36.34*Math.pow(rho*qrmax*1e-3,0.1364)*rho*qrmax*3600:0;
+ g.innerHTML=(top<0?'<span class="k">雲</span><span>なし</span><span class="k">最大上昇流</span><span>'+f(wmax)+' m/s</span>':`<span class="k">雲底 / 雲頂</span><span>${f(base/1000,1)} / ${f(top/1000,1)} km</span><span class="k">雲量 (x 方向)</span><span>${f(cover*100,0)} %</span><span class="k">最大上昇 / 下降</span><span>${f(wmax)} / ${f(wmin)} m/s</span><span class="k">液相 : 氷相</span><span>${f(100*liq/(liq+ice+1e-12),0)} : ${f(100*ice/(liq+ice+1e-12),0)}</span><span class="k">最大降水強度</span><span>${f(Rmm,1)} mm/h</span><span class="k">降水域 (地表)</span><span>${f(rainCols/nx*100,0)} %</span>`)+`<span class="k">地上天気</span><span>${wxTxt}</span>`;}
+function classify(o){if(o.top<0)return '雲なし';const depth=o.top-o.base;const icef=o.ice/(o.liq+o.ice+1e-12);
+ if(o.base>6000&&icef>0.8)return depth>2500?'巻層雲 / 巻積雲 (Cs / Cc)':'巻雲 (Ci)';
+ if(o.top>7500&&o.wmax>8&&o.qrmax>5e-4)return '積乱雲 (Cb)';
+ if(o.top>6000&&o.wmax>5)return '雄大積雲 → 積乱雲 (Cu con / Cb)';
+ if(depth>3000&&o.rainCols>0.2&&o.wmax<5)return '乱層雲 (Ns)';
+ if(o.base>2000&&o.base<7000&&depth<2500)return o.cover>0.6?'高層雲 (As)':'高積雲 (Ac)';
+ if(o.base<2000&&depth<1500)return o.cover>0.7?(o.base<300?'層雲 / 霧 (St)':'層積雲 (Sc)'):'積雲 (Cu hum)';
+ if(o.base<2500&&o.wmax>3)return '積雲 (Cu med)';return '層状雲';}
+
+// ------------------------------------------------------------
+// Presets
+// ------------------------------------------------------------
+const PRESETS=[
+ {n:'積乱雲 — 湿潤・不安定・弱いシアー',mode:0,env:{sfcT:29,lapse:6.8,tropo:12500,strat:1.5,rhSfc:0.85,rhTop:0.25,invZ:0,invDT:0,layers:[{z0:0,z1:2500,rh:0.82}]},terrain:{mountains:[{x:0.62,h:400,w:5000}],landMat:1,rough:60},mats:[[0,24,1],[1,34,0.4]],streams:[{side:-1,z0:0,z1:3000,u:3,dT:0,rh:-1},{side:-1,z0:3000,z1:16000,u:12,dT:0,rh:-1}],micro:{radTop:1.5},bubble:{x:0.38,z:900,amp:1.5,r:1400},sun:[42,-1],noise:0.03},
+ {n:'停滞前線 — 暖湿気流と寒気の衝突 (乱層雲)',mode:0,env:{sfcT:20,lapse:5.8,tropo:11000,strat:1.0,rhSfc:0.75,rhTop:0.3,invZ:0,invDT:0,layers:[]},terrain:{landMat:1,rough:40},mats:[[1,22,0.4]],streams:[{side:-1,z0:0,z1:11000,u:9,dT:4,rh:0.86},{side:1,z0:0,z1:2500,u:-7,dT:-4,rh:0.55}],micro:{radTop:1.0},sun:[28,-1],noise:0.02},
+ {n:'山岳波 — 笠雲・レンズ雲・ローター',mode:0,env:{sfcT:15,lapse:6.5,tropo:11000,strat:1.0,rhSfc:0.7,rhTop:0.35,invZ:0,invDT:0,layers:[{z0:1500,z1:4200,rh:0.86}]},terrain:{mountains:[{x:0.36,h:900,w:2500}],landMat:2,rough:60},mats:[[2,16,0.4]],streams:[{side:-1,z0:0,z1:3000,u:18,dT:0,rh:-1},{side:-1,z0:3000,z1:16000,u:30,dT:0,rh:-1}],micro:{radTop:0.5},sun:[30,1],noise:0.01},
+ {n:'地形性対流 — 山に当たる湿った風',mode:0,env:{sfcT:28,lapse:7.2,tropo:12000,strat:1.0,rhSfc:0.85,rhTop:0.3,invZ:0,invDT:0,layers:[{z0:0,z1:2000,rh:0.85}]},terrain:{mountains:[{x:0.55,h:1800,w:5500}],sea:[[0,0.28]],landMat:2,rough:60},mats:[[0,26,1],[2,31,0.45]],streams:[{side:-1,z0:0,z1:16000,u:6,dT:0,rh:-1}],micro:{radTop:1.0},sun:[45,-1],noise:0.03},
+ {n:'巻雲 — 上層ジェットと氷晶の落下筋',mode:0,env:{sfcT:15,lapse:6.5,tropo:11500,strat:1.0,rhSfc:0.4,rhTop:0.2,invZ:0,invDT:0,layers:[{z0:8200,z1:11000,rh:0.84}]},terrain:{landMat:1,rough:50},mats:[[1,20,0.3]],streams:[{side:-1,z0:0,z1:6000,u:8,dT:0,rh:-1},{side:-1,z0:6000,z1:12500,u:34,dT:0,rh:-1}],micro:{radTop:1.0},sun:[18,1],noise:0.01},
+ {n:'層積雲 — 雲頂放射冷却によるセル対流',mode:0,env:{sfcT:18,lapse:8.0,tropo:11000,strat:1.0,rhSfc:0.9,rhTop:0.2,invZ:1500,invDT:5,layers:[{z0:0,z1:1450,rh:0.97},{z0:1700,z1:6000,rh:0.15}]},terrain:{sea:[[0,1]]},mats:[[0,17,1]],streams:[{side:-1,z0:0,z1:16000,u:5,dT:0,rh:-1}],micro:{radTop:4.0},sun:[35,-1],noise:0.05},
+ {n:'うろこ雲・いわし雲 — 中層の薄い不安定層',mode:0,env:{sfcT:20,lapse:6.5,tropo:11500,strat:1.0,rhSfc:0.5,rhTop:0.2,invZ:5300,invDT:3,layers:[{z0:4400,z1:5250,rh:0.985}]},terrain:{landMat:1,rough:40},mats:[[1,22,0.3]],streams:[{side:-1,z0:0,z1:16000,u:14,dT:0,rh:-1}],micro:{radTop:5.0},sun:[22,1],noise:0.02},
+ {n:'海陸風 — 海岸の積雲列',mode:0,env:{sfcT:27,lapse:7.0,tropo:12000,strat:1.0,rhSfc:0.78,rhTop:0.25,invZ:0,invDT:0,layers:[]},terrain:{sea:[[0,0.5]],landMat:1,rough:70},mats:[[0,22,1],[1,35,0.3]],streams:[],micro:{radTop:1.0},sun:[55,-1],noise:0.04},
+ {n:'霧・層雲 — 冷たい海面への暖湿移流',mode:0,env:{sfcT:12,lapse:6.0,tropo:11000,strat:1.0,rhSfc:0.95,rhTop:0.3,invZ:600,invDT:3,layers:[{z0:0,z1:600,rh:0.985}]},terrain:{sea:[[0,1]]},mats:[[0,5,1]],streams:[{side:-1,z0:0,z1:1500,u:4,dT:1.5,rh:0.98}],micro:{radTop:3.0},sun:[12,-1],noise:0.02},
+ {n:'煙突の後流 — 塔の風下の剥離渦 (x–z のカルマン渦)',mode:0,env:{sfcT:16,lapse:8.5,tropo:11000,strat:1.0,rhSfc:0.75,rhTop:0.3,invZ:2500,invDT:4,layers:[]},terrain:{chimneys:[{x:0.22,h:900,w:300}],landMat:5,rough:20},mats:[[5,18,0.1],[6,38,1.0]],streams:[{side:-1,z0:0,z1:16000,u:9,dT:0,rh:-1}],micro:{radTop:0.5},num:{cs:0.10,nu:0.5},view:{cont2:9,cont2Int:0.01,arrows:1,arrowStride:8},sun:[30,-1],noise:0.01},
+ {n:'周期境界 — 境界なしの対流 (周期条件の例)',mode:0,lat:1,env:{sfcT:28,lapse:7.0,tropo:12000,strat:1.0,rhSfc:0.8,rhTop:0.25,invZ:0,invDT:0,layers:[]},terrain:{landMat:1,rough:50},mats:[[1,33,0.4]],streams:[{side:-1,z0:0,z1:16000,u:5,dT:0,rh:-1}],micro:{radTop:1.0},sun:[50,-1],noise:0.04},
+];
+function applyPreset(p){S.mode=0;S.lat=p.lat||0;Object.assign(S.num,{cs:0.17,nu:1.0},p.num||{});S.env=JSON.parse(JSON.stringify(p.env));S.streams=JSON.parse(JSON.stringify(p.streams));S.islands=p.islands?JSON.parse(JSON.stringify(p.islands)):[];S.islandDT=p.islandDT||8;S.deckQc=p.deckQc||4e-4;
+ S.num.noise=p.noise!==undefined?p.noise:0.02;Object.assign(S.micro,p.micro||{});if(p.sun){S.view.sunElev=p.sun[0];S.view.sunSide=p.sun[1];}
+ (p.mats||[]).forEach(([id,Tv,b])=>{MATS[id].T=Tv;MATS[id].b=b;});
+ S.pendingTerrain=p.terrain||{landMat:1};S.pendingBubble=p.bubble||null;
+ if(p.view){Object.assign(S.view,{overlay:0,cont1:0,cont2:0,arrows:0},p.view);}else{Object.assign(S.view,{overlay:0,cont1:0,cont2:0});}}
+function fullReset(){buildBase();buildTerrainFromSpec(S.pendingTerrain||{landMat:1});buildBase();initFields();
+ if(S.pendingBubble){const b=S.pendingBubble;bubble(b.x*S.Lx,b.z,b.amp,b.r);}
+ // initial pressure solve to get consistent field
+ for(let i=0;i<3;i++)pressureSolve();
+ buildUI();observe();}
+function bubble(x,z,amp,r){draw(P.splat,{...common(),uTh:T.thA,uC:[x,z],uR:r,uAmp:amp},[T.thB]);swap('thA','thB');}
+function autoDt(){return Math.min(2,Math.max(0.5,Math.round(S.dx/30*4)/4));}
+function setGrid(nx,nz){S.nx=nx;S.nz=nz;S.dx=S.Lx/nx;S.Lz=S.dx*nz;S.dt=autoDt();if(S._dtSlider)S._dtSlider.set(S.dt);allocTextures();resize();}
+
+// ------------------------------------------------------------
+// UI builders
+// ------------------------------------------------------------
+function el(tag,attrs,html){const e=document.createElement(tag);if(attrs)for(const k in attrs){if(k==='class')e.className=attrs[k];else e.setAttribute(k,attrs[k]);}if(html!==undefined)e.innerHTML=html;return e;}
+function sec(parent,title){const s=el('div',{class:'sec'});s.appendChild(el('h3',null,title));parent.appendChild(s);return s;}
+function slider(parent,o){const w=el('div',{class:'ctl'});const row=el('div',{class:'row'});const lab=el('label',null,o.label);const v=el('span',{class:'v'});row.appendChild(lab);row.appendChild(v);w.appendChild(row);
+ const r=el('input',{type:'range',min:o.min,max:o.max,step:o.step,id:o.id||('s_'+Math.random().toString(36).slice(2,8))});r.value=o.val;w.appendChild(r);parent.appendChild(w);
+ const fmt=o.fmt||(x=>(+x).toFixed(o.dec===undefined?1:o.dec)+(o.unit?' '+o.unit:''));v.textContent=fmt(o.val);
+ r.addEventListener('input',()=>{v.textContent=fmt(+r.value);o.on(+r.value);});return {set(x){r.value=x;v.textContent=fmt(x);}};}
+function check(parent,o){const row=el('div',{class:'row'});const lab=el('label',{for:o.id},o.label);const c=el('input',{type:'checkbox',id:o.id});c.checked=!!o.val;c.addEventListener('change',()=>o.on(c.checked));row.appendChild(lab);row.appendChild(c);parent.appendChild(row);return c;}
+function select(parent,o){const row=el('div',{class:'row'});row.appendChild(el('label',null,o.label));const s=el('select',{id:o.id});o.opts.forEach(([v,t])=>{const op=el('option',{value:v},t);if(String(v)===String(o.val))op.selected=true;s.appendChild(op);});s.addEventListener('change',()=>o.on(s.value));row.appendChild(s);parent.appendChild(row);return s;}
+function numin(parent,label,val,on,step){const row=el('div',{class:'row'});row.appendChild(el('label',null,label));const i=el('input',{type:'number',step:step||1});i.value=val;i.addEventListener('change',()=>on(+i.value));row.appendChild(i);parent.appendChild(row);return i;}
+function note(parent,txt){parent.appendChild(el('div',{class:'note'},txt));}
+
+let uiBuilt=false;
+function buildUI(){
+ // ---- 大気
+ const E=$('#tab-env');E.innerHTML='';
+ let s=sec(E,'基本場 (静力学平衡から積分)');
+ note(s,'変更は「初期化」で反映。基本場 θ₀(z), ρ₀(z), π₀(z) は地上気温と気温減率から静力学積分する。');
+ slider(s,{label:'地上気温 T₀',min:-20,max:45,step:0.5,val:S.env.sfcT,unit:'°C',on:v=>S.env.sfcT=v});
+ slider(s,{label:'気温減率 Γ (対流圏)',min:3,max:10,step:0.1,val:S.env.lapse,unit:'K/km',on:v=>S.env.lapse=v});
+ slider(s,{label:'圏界面高度',min:6000,max:16000,step:100,val:S.env.tropo,unit:'m',dec:0,on:v=>S.env.tropo=v});
+ slider(s,{label:'成層圏の昇温率',min:-2,max:4,step:0.1,val:S.env.strat,unit:'K/km',on:v=>S.env.strat=v});
+ slider(s,{label:'逆転層 高度 (0 = なし)',min:0,max:8000,step:50,val:S.env.invZ,unit:'m',dec:0,on:v=>S.env.invZ=v});
+ slider(s,{label:'逆転層 温度ジャンプ',min:0,max:10,step:0.5,val:S.env.invDT,unit:'K',on:v=>S.env.invDT=v});
+ s=sec(E,'湿度プロファイル');
+ slider(s,{label:'地上 RH',min:0,max:1,step:0.01,val:S.env.rhSfc,fmt:x=>(x*100).toFixed(0)+' %',on:v=>S.env.rhSfc=v});
+ slider(s,{label:'圏界面 RH',min:0,max:1,step:0.01,val:S.env.rhTop,fmt:x=>(x*100).toFixed(0)+' %',on:v=>S.env.rhTop=v});
+ const LW=el('div');s.appendChild(LW);
+ function drawLayers(){LW.innerHTML='';S.env.layers.forEach((L,idx)=>{const c=el('div',{class:'card'});c.appendChild(el('div',{class:'hd'},`<b>湿潤層 ${idx+1}</b><button class="x" data-i="${idx}">✕</button>`));const g=el('div',{class:'grid3'});c.appendChild(g);
+   const a=el('div');numin(a,'下端 m',L.z0,v=>L.z0=v,100);const b=el('div');numin(b,'上端 m',L.z1,v=>L.z1=v,100);const d=el('div');numin(d,'RH',L.rh,v=>L.rh=v,0.01);g.appendChild(a);g.appendChild(b);g.appendChild(d);LW.appendChild(c);
+   c.querySelector('.x').addEventListener('click',()=>{S.env.layers.splice(idx,1);drawLayers();});});}
+ drawLayers();const addL=el('button',null,'+ 湿潤層を追加');addL.addEventListener('click',()=>{S.env.layers.push({z0:2000,z1:4000,rh:0.9});drawLayers();});s.appendChild(addL);
+ s=sec(E,'領域');
+ slider(s,{label:'水平幅 L_x',min:16000,max:120000,step:1000,val:S.Lx,fmt:x=>(x/1000).toFixed(0)+' km (高さ '+(x/3/1000).toFixed(1)+' km)',on:v=>{S.Lx=v;S.dx=S.Lx/S.nx;S.Lz=S.dx*S.nz;}});
+ note(s,'格子は正方セル、縦横比 3:1 固定。幅を変えると高さも変わる (初期化で反映)。');
+
+ // ---- 地表
+ const F=$('#tab-sfc');F.innerHTML='';
+ s=sec(F,'地表材質 (温度と蒸発効率 β)');note(s,'地表セルではバルク式で顕熱・潜熱・運動量を交換する。β=1 が水面、砂漠はほぼ 0。変更は即時反映。');
+ const mg=el('div',{class:'mat'});mg.appendChild(el('span',null,''));mg.appendChild(el('span',{class:'note'},'温度 °C'));mg.appendChild(el('span',{class:'note'},'β'));
+ MATS.forEach((m,id)=>{mg.appendChild(el('span',null,`<i class="sw" style="background:${m.c}"></i>${m.n}`));const a=el('input',{type:'number',step:0.5});a.value=m.T;a.addEventListener('change',()=>{m.T=+a.value;uploadTerrain();});const b=el('input',{type:'number',step:0.05,min:0,max:1});b.value=m.b;b.addEventListener('change',()=>{m.b=+b.value;uploadTerrain();});mg.appendChild(a);mg.appendChild(b);});
+ s.appendChild(mg);
+ s=sec(F,'地形ブラシ');note(s,'左のツール「地形」でドラッグ (Shift で削る)、「材質」で塗る。地形は即時反映され、飲み込まれたセルは静止する。材質「煙突」は交換係数 4 倍の強制排気 (高温・湿潤) で、塔の風下の剥離渦や蒸気雲の観察用。');
+ slider(s,{label:'ブラシ半径',min:300,max:10000,step:100,val:S.brushR,unit:'m',dec:0,on:v=>S.brushR=v});
+ slider(s,{label:'隆起量 (1 秒あたり)',min:50,max:2000,step:50,val:S.brushAmp,unit:'m',dec:0,on:v=>S.brushAmp=v});
+ select(s,{label:'塗る材質',id:'paintMat',opts:MATS.map((m,i)=>[i,m.n]),val:S.paintMat,on:v=>S.paintMat=+v});
+ const bt=el('div',{class:'btns'});[['平地にする',()=>{buildTerrainFromSpec({landMat:1});}],['全部 海',()=>{buildTerrainFromSpec({sea:[[0,1]]});}],['左半分 海',()=>{buildTerrainFromSpec({sea:[[0,0.5]],landMat:1});}],['中央に山 2000 m',()=>{buildTerrainFromSpec({mountains:[{x:0.4,h:2000,w:4500}],landMat:2,rough:60});}],['二つの山',()=>{buildTerrainFromSpec({mountains:[{x:0.3,h:1500,w:3500},{x:0.62,h:2400,w:4000}],landMat:2,rough:60});}],['煙突 600 m',()=>{buildTerrainFromSpec({chimneys:[{x:0.22,h:600,w:220}],landMat:5,rough:20});}]].forEach(([t,f])=>{const b=el('button',null,t);b.addEventListener('click',f);bt.appendChild(b);});s.appendChild(bt);
+
+
+ // ---- 気流
+ const W=$('#tab-wind');W.innerHTML='';s=sec(W,'気流 (側面境界からの流入をナッジング)');
+ note(s,'各気流は流入側の境界付近で速度・温度偏差・湿度を目標値へ緩和する。西風 (u>0) は左から、東風 (u<0) は右から流入。同じ高度に両側の気流を置くと領域中央で衝突し前線になる。ΔT は基本場からの偏差で、気流の上半分で 0 へ滑らかに減衰する (上端に人工的な超断熱層を作らないため)。暖気を全層で入れたいときは上端を 16000 m にする。RH に −1 を入れると基本場の湿度を使う。初期化時は領域全体に気流を敷く。');
+ const SW=el('div');s.appendChild(SW);
+ function drawStreams(){SW.innerHTML='';S.streams.forEach((st,idx)=>{const c=el('div',{class:'card'});c.appendChild(el('div',{class:'hd'},`<b>気流 ${idx+1}</b><span class="chip">${st.side<0?'← 西から (左)':'東から (右) →'}</span><button class="x" data-i="${idx}">✕</button>`));
+   select(c,{label:'流入側',opts:[[-1,'西 (左境界)'],[1,'東 (右境界)']],val:st.side,on:v=>{st.side=+v;drawStreams();}});
+   const g=el('div',{class:'grid2'});c.appendChild(g);const a=el('div');numin(a,'下端 m',st.z0,v=>st.z0=v,100);const b=el('div');numin(b,'上端 m',st.z1,v=>st.z1=v,100);const d=el('div');numin(d,'u m/s',st.u,v=>st.u=v,0.5);const e=el('div');numin(e,'ΔT K',st.dT,v=>st.dT=v,0.5);const f=el('div');numin(f,'RH (0-1, −1=基本場)',st.rh,v=>st.rh=v,0.01);g.appendChild(a);g.appendChild(b);g.appendChild(d);g.appendChild(e);g.appendChild(f);
+   SW.appendChild(c);c.querySelector('.x').addEventListener('click',()=>{S.streams.splice(idx,1);drawStreams();});});}
+ drawStreams();const addS=el('button',null,'+ 気流を追加');addS.addEventListener('click',()=>{S.streams.push({side:-1,z0:0,z1:3000,u:8,dT:0,rh:-1});drawStreams();});s.appendChild(addS);
+ s=sec(W,'側面境界条件');
+ select(s,{label:'左右の境界',id:'latSel',opts:[[0,'開放 (吸収層つき流入・流出)'],[1,'周期 (右端と左端をつなぐ)'],[2,'閉鎖 (壁)']],val:S.lat,on:v=>{S.lat=+v;updateCond();}});
+ note(s,'開放: 境界近くの吸収層で基本場 (θ₀, q_v0, 初期風 u₀(z)) へ緩和し、出て行く擾乱の反射を抑える。気流はこの吸収層の流入側で目標値へ置き換わる。周期: 気流は初期風プロファイルとしてだけ使われ、境界は存在しない (対流列の観察向き)。閉鎖: 両端が壁 (タンク実験)。変更は即時。');
+ slider(s,{label:'吸収層の幅',min:500,max:8000,step:100,val:S.num.latW,unit:'m',dec:0,on:v=>{S.num.latW=v;updateCond();}});
+ slider(s,{label:'吸収層の時定数 (境界で)',min:10,max:600,step:10,val:S.num.latTau,unit:'s',dec:0,on:v=>S.num.latTau=v});
+ slider(s,{label:'気流ナッジング時定数',min:5,max:300,step:5,val:S.num.nudgeTau,unit:'s',dec:0,on:v=>S.num.nudgeTau=v});
+ slider(s,{label:'上端スポンジ層の厚さ',min:0,max:0.3,step:0.01,val:S.num.spH,fmt:x=>(x*100).toFixed(0)+' % of L_z',on:v=>S.num.spH=v});
+ slider(s,{label:'スポンジ減衰率',min:0,max:0.2,step:0.005,val:S.num.spRate,unit:'1/s',dec:3,on:v=>S.num.spRate=v});
+
+ // ---- 雲物理
+ const M=$('#tab-micro');M.innerHTML='';s=sec(M,'相の切替');
+ check(s,{label:'暖かい雨 (飽和調節・自己変換・併合)',id:'warmOn',val:S.micro.warm,on:v=>S.micro.warm=v?1:0});
+ check(s,{label:'氷相過程 (凍結・昇華・WBF・融解)',id:'iceOn',val:S.micro.ice,on:v=>S.micro.ice=v?1:0});
+ s=sec(M,'暖かい雨 (Kessler 型)');
+ slider(s,{label:'自己変換しきい値 q_c0',min:0,max:3e-3,step:1e-4,val:S.micro.qc0,fmt:x=>(x*1e3).toFixed(1)+' g/kg',on:v=>S.micro.qc0=v});
+ slider(s,{label:'自己変換率 k₁',min:0,max:5e-3,step:1e-4,val:S.micro.k1,fmt:x=>x.toExponential(1)+' /s',on:v=>S.micro.k1=v});
+ slider(s,{label:'併合係数 k₂',min:0,max:6,step:0.1,val:S.micro.k2,on:v=>S.micro.k2=v});
+ slider(s,{label:'雨の蒸発 倍率',min:0,max:3,step:0.1,val:S.micro.ke,on:v=>S.micro.ke=v});
+ s=sec(M,'氷相');
+ slider(s,{label:'不均質凍結 時定数',min:60,max:3600,step:30,val:S.micro.tauF,unit:'s',dec:0,on:v=>S.micro.tauF=v});
+ slider(s,{label:'昇華成長 時定数',min:30,max:1800,step:30,val:S.micro.tauDep,unit:'s',dec:0,on:v=>S.micro.tauDep=v});
+ slider(s,{label:'雲氷→雪 しきい値 q_i0',min:0,max:1e-3,step:2e-5,val:S.micro.qi0,fmt:x=>(x*1e3).toFixed(2)+' g/kg',on:v=>S.micro.qi0=v});
+ slider(s,{label:'雲氷→雪 変換率',min:0,max:5e-3,step:1e-4,val:S.micro.kis,fmt:x=>x.toExponential(1)+' /s',on:v=>S.micro.kis=v});
+ slider(s,{label:'雲粒着氷 (riming) 係数',min:0,max:4,step:0.1,val:S.micro.ksc,on:v=>S.micro.ksc=v});
+ slider(s,{label:'融解 時定数',min:20,max:600,step:10,val:S.micro.tauMelt,unit:'s·K',dec:0,on:v=>S.micro.tauMelt=v});
+ slider(s,{label:'雲氷の落下速度',min:0,max:1.5,step:0.05,val:S.micro.vic,unit:'m/s',dec:2,on:v=>S.micro.vic=v});
+ slider(s,{label:'雪の落下速度',min:0,max:3,step:0.1,val:S.micro.vsn,unit:'m/s',on:v=>S.micro.vsn=v});
+ s=sec(M,'放射');
+ slider(s,{label:'雲頂の長波放射冷却',min:0,max:8,step:0.25,val:S.micro.radTop,unit:'K/h',dec:2,on:v=>S.micro.radTop=v});
+ slider(s,{label:'晴天域の放射冷却',min:0,max:5,step:0.1,val:S.micro.radClr,unit:'K/day',on:v=>S.micro.radClr=v});
+ s=sec(M,'地表フラックス係数');
+ slider(s,{label:'顕熱 C_h',min:0,max:5e-3,step:1e-4,val:S.num.ch,fmt:x=>x.toExponential(1),on:v=>S.num.ch=v});
+ slider(s,{label:'潜熱 C_e',min:0,max:5e-3,step:1e-4,val:S.num.ce,fmt:x=>x.toExponential(1),on:v=>S.num.ce=v});
+ slider(s,{label:'抵抗 C_d',min:0,max:1e-2,step:2e-4,val:S.num.cd,fmt:x=>x.toExponential(1),on:v=>S.num.cd=v});
+ slider(s,{label:'地表の乱れ (温位ノイズ)',min:0,max:0.2,step:0.005,val:S.num.noise,unit:'K/s',dec:3,on:v=>S.num.noise=v});
+
+ // ---- 表示
+ const V=$('#tab-view');V.innerHTML='';s=sec(V,'場の可視化');
+ const ovSel=select(s,{label:'重ねる場',id:'ovSel',opts:OVERLAYS.map((o,i)=>[i,o[0]]),val:S.view.overlay,on:v=>{setOverlay(+v);}});
+ const cmSel=select(s,{label:'カラーマップ',id:'cmSel',opts:[[0,'viridis'],[1,'magma'],[2,'inferno'],[3,'diverging']],val:S.view.cmap,on:v=>{S.view.cmap=+v;drawLegend();}});
+ const rr=el('div',{class:'grid2'});s.appendChild(rr);const rmin=el('div'),rmax=el('div');rr.appendChild(rmin);rr.appendChild(rmax);
+ const rminI=numin(rmin,'最小',S.view.range[0],v=>{S.view.range[0]=v;drawLegend();},'any');const rmaxI=numin(rmax,'最大',S.view.range[1],v=>{S.view.range[1]=v;drawLegend();},'any');
+ S._rangeInputs=[rminI,rmaxI,cmSel];
+ slider(s,{label:'不透明度',min:0,max:1,step:0.05,val:S.view.alpha,dec:2,on:v=>S.view.alpha=v});
+ slider(s,{label:'塗りの等値線本数 (0 = なし)',min:0,max:40,step:1,val:S.view.contours,dec:0,on:v=>S.view.contours=v});
+ s=sec(V,'等値線 (画面上の表示バーと連動)');
+ select(s,{label:'等値線 A (白, 気温なら 0 °C を太線)',id:'c1Sel',opts:OVERLAYS.map((o,i)=>[i,o[0]]),val:S.view.cont1,on:v=>setCont(1,+v)});
+ S._c1Int=slider(s,{label:'等値線 A の間隔',min:0.001,max:50,step:0.001,val:S.view.cont1Int,dec:3,on:v=>S.view.cont1Int=v});
+ select(s,{label:'等値線 B (負=青, 正=橙)',id:'c2Sel',opts:OVERLAYS.map((o,i)=>[i,o[0]]),val:S.view.cont2,on:v=>setCont(2,+v)});
+ S._c2Int=slider(s,{label:'等値線 B の間隔',min:0.001,max:50,step:0.001,val:S.view.cont2Int,dec:3,on:v=>S.view.cont2Int=v});
+ check(s,{label:'地上天気の帯 (雨=青, 雪=白, みぞれ=紫)',id:'wxChk',val:S.view.wx,on:v=>{S.view.wx=v?1:0;syncViewbar();}});
+ check(s,{label:'風ベクトル',id:'arrows',val:S.view.arrows,on:v=>{S.view.arrows=v?1:0;syncViewbar();}});
+ slider(s,{label:'ベクトル間隔',min:4,max:48,step:2,val:S.view.arrowStride,unit:'セル',dec:0,on:v=>S.view.arrowStride=v});
+ s=sec(V,'雲の描画');
+ check(s,{label:'相を色分け (氷=青紫, 雨=青, 雪=水色)',id:'phaseCol',val:S.view.style,on:v=>{S.view.style=v?1:0;syncViewbar();}});
+ slider(s,{label:'見かけの奥行き (光学的厚さ)',min:40,max:1000,step:10,val:S.view.Ly,unit:'m',dec:0,on:v=>S.view.Ly=v});
+ slider(s,{label:'太陽高度',min:-10,max:90,step:1,val:S.view.sunElev,unit:'°',dec:0,on:v=>S.view.sunElev=v});
+ select(s,{label:'太陽の方位',opts:[[-1,'左 (西)'],[1,'右 (東)']],val:S.view.sunSide,on:v=>S.view.sunSide=+v});
+ check(s,{label:'粒子の軌跡を表示',id:'trails',val:S.view.showTrails,on:v=>S.view.showTrails=v?1:0});
+ slider(s,{label:'軌跡の長さ',min:10,max:S.partH-1,step:5,val:S.view.trailLen,unit:'ステップ',dec:0,on:v=>S.view.trailLen=v});
+ s=sec(V,'アートモード');note(s,'上のバーの「◐ アート」または <kbd>A</kbd> で UI を隠し、空と地面を画面いっぱいに描き延ばして眺める。<kbd>Esc</kbd> で戻る。マウスを上端に寄せるとバーが出る。');
+ check(s,{label:'太陽を日周運動させる',id:'artDiurnal',val:S.artDiurnal,on:v=>S.artDiurnal=v});
+ slider(s,{label:'1 日の長さ (実時間)',min:60,max:1800,step:30,val:S.artPeriod,fmt:x=>(x/60).toFixed(1)+' 分',on:v=>S.artPeriod=v});
+ s=sec(V,'キー操作');note(s,'<kbd>Space</kbd> 再生/停止　<kbd>R</kbd> 初期化　<kbd>1</kbd>–<kbd>9</kbd> 場の切替 (T, θ, RH, q_v, w, |v|, ζ, q_c, θ_e)　<kbd>0</kbd> 場を消す　<kbd>H</kbd> パネル表示切替　<kbd>A</kbd> アートモード');
+
+ // ---- 粒子
+ const Pt=$('#tab-part');Pt.innerHTML='';s=sec(Pt,'追跡粒子');
+ note(s,'ツール「粒子」でクリックすると空気塊 (質量ゼロの標識) を置く。「雲粒」は半径 1 µm の凝結核から始まり、過飽和で拡散成長し、雲水を捕捉して大きくなり、終端速度で落下する。−38 °C 以下では氷晶になる (氷飽和基準で成長)。Shift+クリックで 12 個をまとめて置く。');
+ const pb=el('div',{class:'btns'});[['雲底付近に雲粒 ×24',()=>{seedDrops();}],['地表付近に空気塊 ×24',()=>{for(let i=0;i<24;i++)addParticle(S.Lx*(0.1+0.8*i/23),S.dx*(1.5+Math.random()*8),1);}],['全消去',()=>clearParticles()]].forEach(([t,f])=>{const b=el('button',null,t);b.addEventListener('click',f);pb.appendChild(b);});s.appendChild(pb);
+ slider(s,{label:'熱泡の強さ',min:-5,max:5,step:0.25,val:S.bubbleAmp,unit:'K',dec:2,on:v=>S.bubbleAmp=v});
+ slider(s,{label:'熱泡の半径',min:300,max:4000,step:100,val:S.bubbleR,unit:'m',dec:0,on:v=>S.bubbleR=v});
+ note(s,'選択中の粒子 (橙) は左の追跡パネルに状態と高度の時系列が出る。粒子をクリックすると選択が切り替わる。');
+
+ // ---- 計算
+ const N=$('#tab-num');N.innerHTML='';s=sec(N,'格子');
+ const gsel=select(s,{label:'解像度',id:'gridSel',opts:GRIDS.map((g,i)=>[i,`${g[0]} × ${g[1]}  (Δ = ${(S.Lx/g[0]).toFixed(0)} m)`]),val:GRIDS.findIndex(g=>g[0]===S.nx),on:v=>{const g=GRIDS[+v];S.playing=false;setGrid(g[0],g[1]);fullReset();}});
+ note(s,`起動時ベンチマーク: ${S.benchMsg||'—'}。解像度変更は即座に初期化される。`);
+ s=sec(N,'時間積分');
+ S._dtSlider=slider(s,{label:'時間刻み Δt (格子変更時は Δ/30 m/s を目安に自動設定)',min:0.25,max:6,step:0.25,val:S.dt,unit:'s',dec:2,on:v=>S.dt=v});
+ slider(s,{label:'1 フレームあたりのステップ数',min:1,max:12,step:1,val:S.substeps,dec:0,on:v=>S.substeps=v});
+ slider(s,{label:'圧力 マルチグリッド V サイクル数',min:1,max:6,step:1,val:S.vcycles,dec:0,on:v=>S.vcycles=v});
+ slider(s,{label:'圧力 仕上げ Jacobi 反復',min:0,max:60,step:2,val:S.jacobi,dec:0,on:v=>S.jacobi=v});
+ note(s,`圧力ポアソン方程式は幾何マルチグリッド (${T.mg?T.mg.length+1:'-'} 階層, 重み付き Jacobi 平滑化) で解く。V サイクルを増やすと大規模な発散残差が減る。`);
+ s=sec(N,'乱流・粘性');
+ slider(s,{label:'Smagorinsky 定数 C_s',min:0,max:0.4,step:0.01,val:S.num.cs,dec:2,on:v=>S.num.cs=v});
+ slider(s,{label:'背景粘性 ν₀',min:0,max:20,step:0.5,val:S.num.nu,unit:'m²/s',on:v=>S.num.nu=v});
+ note(s,'C_s を下げると渦が細かく残り剥離渦が鮮明になるが、格子スケールのノイズも増える。Δt·|v|/Δ が 2 を超えると半ラグランジュでも精度が落ちる。');
+ if(!uiBuilt){initViewbar();renderToolHint();}uiBuilt=true;drawLegend();syncViewbar();updateCond();
+ // preset select
+ const ps=$('#preset');if(!ps.options.length){PRESETS.forEach((p,i)=>ps.appendChild(el('option',{value:i},p.n)));ps.addEventListener('change',()=>{loadPreset(+ps.value);});}
+}
+function seedDrops(){observe();let base=1e9;for(let k=0;k<S.nz;k++){for(let i=0;i<S.nx;i++){if(obsBuf[(k*S.nx+i)*4]+obsBuf[(k*S.nx+i)*4+2]>2e-5){base=Math.min(base,(k+0.5)*S.dx);}}}
+ if(base>1e8)base=S.dx*4;for(let i=0;i<24;i++){addParticle(S.Lx*(0.08+0.84*i/23),Math.max(S.dx*2,base-150+Math.random()*300),2);}}
+function setOverlay(i){S.view.overlay=i;const o=OVERLAYS[i];if(o[1]){S.view.range=[...o[1]];S.view.cmap=o[2];}
+ if(S._rangeInputs){S._rangeInputs[0].value=S.view.range[0];S._rangeInputs[1].value=S.view.range[1];S._rangeInputs[2].value=S.view.cmap;}$('#ovSel').value=i;drawLegend();syncViewbar();}
+function setCont(n,i){const o=OVERLAYS[i];if(n===1){S.view.cont1=i;S.view.cont1Int=o[3];if(S._c1Int)S._c1Int.set(o[3]);const e=$('#c1Sel');if(e)e.value=i;}else{S.view.cont2=i;S.view.cont2Int=o[3];if(S._c2Int)S._c2Int.set(o[3]);const e=$('#c2Sel');if(e)e.value=i;}drawLegend();syncViewbar();}
+function syncViewbar(){const v=S.view;$('#vbFill').value=v.overlay;$('#vbC1').value=v.cont1;$('#vbC2').value=v.cont2;$('#vbWind').classList.toggle('on',!!v.arrows);$('#vbPhase').classList.toggle('on',!!v.style);$('#vbWx').classList.toggle('on',!!v.wx);
+ const comp=v.overlay===3&&v.cont1===1&&v.cont2===6&&v.arrows&&v.style;$('#vbComposite').classList.toggle('on',comp);
+ ['arrows','phaseCol','wxChk'].forEach((id,k)=>{const e=document.getElementById(id);if(e)e.checked=!![v.arrows,v.style,v.wx][k];});}
+function initViewbar(){['vbFill','vbC1','vbC2'].forEach(id=>{const sel=$('#'+id);sel.innerHTML='';OVERLAYS.forEach((o,i)=>sel.appendChild(el('option',{value:i},o[0])));});
+ $('#vbFill').addEventListener('change',e=>setOverlay(+e.target.value));$('#vbC1').addEventListener('change',e=>setCont(1,+e.target.value));$('#vbC2').addEventListener('change',e=>setCont(2,+e.target.value));
+ $('#vbWind').addEventListener('click',()=>{S.view.arrows=S.view.arrows?0:1;syncViewbar();});$('#vbPhase').addEventListener('click',()=>{S.view.style=S.view.style?0:1;syncViewbar();});$('#vbWx').addEventListener('click',()=>{S.view.wx=S.view.wx?0:1;syncViewbar();});
+ $('#vbComposite').addEventListener('click',()=>{setOverlay(3);S.view.alpha=0.35;setCont(1,1);setCont(2,6);S.view.cont2Int=3;if(S._c2Int)S._c2Int.set(3);S.view.arrows=1;S.view.style=1;S.view.wx=1;S.view.arrowStride=Math.max(12,Math.round(S.nx/48));syncViewbar();drawLegend();});
+ $('#vbClear').addEventListener('click',()=>{setOverlay(0);setCont(1,0);setCont(2,0);S.view.arrows=0;S.view.alpha=0.85;syncViewbar();drawLegend();});
+ $('#condToggle').addEventListener('click',()=>{$('#cond').classList.toggle('min');$('#condToggle').textContent=$('#cond').classList.contains('min')?'▸ 展開':'▾';resize();});}
+const TOOLHELP={
+ probe:['探査','ドメイン上にカーソルを置くと、その格子点の T・θ・RH・水物質・風を左下に表示。粒子をクリックすると追跡対象を切り替える。'],
+ parcel:['粒子 (空気塊の追跡)','キャンバスをクリックした場所に、流れに乗って動く空気塊の標識を置く。Shift+クリックで 12 個まとめて置く。置いた粒子は自動で選択され、左の追跡パネルに温度・湿度・高度の時系列が出る。'],
+ drop:['雲粒 (成長する水滴)','クリックした場所に半径 1 µm の凝結核を置く。雲の中で過飽和なら拡散成長し、雲水を捕捉して雨粒へ育ち、終端速度で落ちる。−38 °C 以下で氷晶になる。雲底のすぐ下に置くと上昇流に乗って育つ様子が追える。Shift+クリックで 12 個。'],
+ bubble:['熱泡 (対流の引き金)','クリックした場所に暖かい空気の塊 (温位 +ΔT) を置く。相対湿度は保たれる。不安定な大気なら泡が浮力で上昇し、凝結して積雲になる。Shift+クリックで冷気泡 (−ΔT)。強さと半径は下のスライダー。'],
+ raise:['地形 (山を盛る・削る)','キャンバス上で左右にドラッグすると、その場所の地形がブラシ半径の範囲で盛り上がる。Shift+ドラッグで削る。海の上に盛ると草地になる。半径と速さは下のスライダー。'],
+ paint:['材質 (地表の種類を塗る)','キャンバス上をドラッグして、その列の地表材質を下で選んだ材質に塗り替える。材質ごとの温度と蒸発効率 β は「地表」タブで変えられる。「海」を塗ると標高 0 になる。「煙突」は高温湿潤の排気源。'],
+};
+function renderToolHint(){setTimeout(resize,0);const [t,d]=TOOLHELP[S.tool];const h=$('#toolhint');h.innerHTML=`<span><b>${t}</b> — ${d}</span>`;
+ const mini=(label,min,max,step,val,fmt,on)=>{const w=el('div',{class:'mini'});w.innerHTML=`<span>${label}</span>`;const r=el('input',{type:'range',min,max,step});r.value=val;const v=el('span',{class:'v'},fmt(val));r.addEventListener('input',()=>{v.textContent=fmt(+r.value);on(+r.value);});w.appendChild(r);w.appendChild(v);h.appendChild(w);};
+ if(S.tool==='bubble'){mini('ΔT',0.25,5,0.25,S.bubbleAmp,x=>x.toFixed(2)+' K',v=>S.bubbleAmp=v);mini('半径',300,4000,100,S.bubbleR,x=>x+' m',v=>S.bubbleR=v);}
+ if(S.tool==='raise'){mini('半径',300,10000,100,S.brushR,x=>(x/1000).toFixed(1)+' km',v=>S.brushR=v);mini('速さ',50,2000,50,S.brushAmp,x=>x+' m/s',v=>S.brushAmp=v);}
+ if(S.tool==='paint'){const w=el('div',{class:'mini'});w.innerHTML='<span>材質</span>';const sel=el('select');MATS.forEach((m,i)=>{const o=el('option',{value:i},m.n);if(i===S.paintMat)o.selected=true;sel.appendChild(o);});sel.addEventListener('change',()=>{S.paintMat=+sel.value;const pm=$('#paintMat');if(pm)pm.value=S.paintMat;});w.appendChild(sel);h.appendChild(w);mini('半径',300,10000,100,S.brushR,x=>(x/1000).toFixed(1)+' km',v=>S.brushR=v);}}
+function updateCond(){const e=S.env,f=(v,d=1)=>(+v).toFixed(d);const rows=[];
+ rows.push(['基本場',`地上 ${f(e.sfcT)} °C · Γ ${f(e.lapse)} K/km · 圏界面 ${f(e.tropo/1000)} km · 成層圏 ${e.strat>=0?'+':''}${f(e.strat)} K/km`+(e.invZ>0&&e.invDT?` · 逆転層 ${f(e.invZ/1000)} km +${f(e.invDT)} K`:'')]);
+ rows.push(['湿度',`地上 ${f(e.rhSfc*100,0)} % → 圏界面 ${f(e.rhTop*100,0)} %`+(e.layers.length?' · 湿潤層 '+e.layers.map(L=>`${f(L.z0/1000)}–${f(L.z1/1000)} km ${f(L.rh*100,0)} %`).join(', '):'')]);
+ const lat=['開放 (吸収層 '+f(S.num.latW/1000)+' km)','周期','閉鎖 (壁)'][S.lat];
+ rows.push(['境界',lat+' · 上端スポンジ '+f(S.num.spH*100,0)+' %']);
+ if(S.streams.length)rows.push([S.lat===1?'初期風':'気流',S.streams.map(st=>`${st.side<0?'←西':'東→'} ${f(st.z0/1000)}–${f(st.z1/1000)} km u ${f(st.u)} m/s`+(st.dT?` ΔT ${st.dT>0?'+':''}${f(st.dT)} K`:'')+(st.rh>=0?` RH ${f(st.rh*100,0)} %`:'')).join(' | ')]);else rows.push(['気流','なし (静穏)']);
+ if(terrM){const cnt={};for(let i=0;i<S.nx;i++)cnt[terrM[i]]=(cnt[terrM[i]]||0)+1;rows.push(['地表',Object.keys(cnt).map(k=>`${MATS[k].n} ${f(MATS[k].T)} °C β${f(MATS[k].b,2)} (${f(cnt[k]/S.nx*100,0)} %)`).join(' · ')]);}
+ const m=S.micro;rows.push(['物理',`暖かい雨 ${m.warm?'ON':'OFF'} · 氷相 ${m.ice?'ON':'OFF'} · 雲頂冷却 ${f(m.radTop,2)} K/h · 晴天冷却 ${f(m.radClr)} K/day · C_s ${f(S.num.cs,2)}`]);
+ rows.push(['格子',`${S.nx}×${S.nz} · Δ ${f(S.dx,0)} m · Δt ${f(S.dt,2)} s × ${S.substeps}/frame`]);
+ const html=rows.map(([k,v])=>`<span class="k">${k}</span><span>${v}</span>`).join('');if(html!==S._condHtml){S._condHtml=html;$('#condBody').innerHTML=html;setTimeout(resize,0);}}
+
+function cmapJS(t,m){t=clamp(t,0,1);const ev=(c,t)=>{let r=[0,0,0];for(let j=0;j<3;j++){r[j]=c[0][j]+t*(c[1][j]+t*(c[2][j]+t*(c[3][j]+t*(c[4][j]+t*(c[5][j]+t*c[6][j])))));}return r;};
+ const VI=[[0.2777,0.0054,0.3341],[0.1051,1.4046,1.3846],[-0.3309,0.2148,0.0951],[-4.6342,-5.7991,-19.3324],[6.2283,14.1799,56.6906],[4.7764,-13.7451,-65.3530],[-5.4355,4.6459,26.3124]];
+ const MA=[[-0.0021,-0.0007,-0.0054],[0.2517,0.6775,2.4940],[8.3537,-3.5777,0.3145],[-27.6687,14.2647,-13.6492],[52.1761,-27.9436,12.9442],[-50.7685,29.0466,4.2342],[18.6557,-11.4898,-5.6020]];
+ const IN=[[0.0002,0.0017,-0.0195],[0.1065,0.5640,3.9327],[11.6025,-3.9729,-15.9424],[-41.7040,17.4364,44.3541],[77.1629,-33.4024,-81.8073],[-71.3194,32.6261,73.2095],[25.1311,-12.2427,-23.0703]];
+ if(m===0)return ev(VI,t);if(m===1)return ev(MA,t);if(m===2)return ev(IN,t);const b=[0.23,0.30,0.75],w=[0.94,0.94,0.94],r=[0.72,0.09,0.12];const mix=(a,c,f)=>a.map((x,j)=>x+(c[j]-x)*f);return t<0.5?mix(b,w,t*2):mix(w,r,(t-0.5)*2);}
+function drawLegend(){const L=$('#legend');if(!S.view.overlay){L.classList.remove('on');return;}L.classList.add('on');const c=$('#legBar').getContext('2d');for(let i=0;i<140;i++){const col=cmapJS(i/139,S.view.cmap);c.fillStyle=`rgb(${col.map(x=>Math.round(clamp(x,0,1)*255)).join(',')})`;c.fillRect(i,0,1,10);}
+ $('#legMin').textContent=S.view.range[0];$('#legMax').textContent=S.view.range[1];$('#legName').textContent=OVERLAYS[S.view.overlay][0];}
+function legendExtra(){const v=S.view,o=[];if(v.cont1)o.push(`等値線A(白) ${OVERLAYS[v.cont1][0].split(' [')[0]} ${v.cont1Int} 間隔${v.cont1===1?' (0 °C 太線)':''}`);if(v.cont2)o.push(`等値線B(青/橙) ${OVERLAYS[v.cont2][0].split(' [')[0]} ${v.cont2Int} 間隔`);if(v.style)o.push('雲: 白=水滴 青紫=氷晶 青=雨 水色=雪');if(v.wx)o.push('下端の帯: 地上天気 (青=雨 白=雪 紫=みぞれ)');return o;}
+
+// ------------------------------------------------------------
+// Interaction
+// ------------------------------------------------------------
+document.querySelectorAll('#tools button').forEach(b=>b.addEventListener('click',()=>{document.querySelectorAll('#tools button').forEach(x=>x.classList.remove('on'));b.classList.add('on');S.tool=b.dataset.tool;renderToolHint();}));
+document.querySelectorAll('#tabs button').forEach(b=>b.addEventListener('click',()=>{document.querySelectorAll('#tabs button').forEach(x=>x.classList.remove('on'));document.querySelectorAll('.tab').forEach(x=>x.classList.remove('on'));b.classList.add('on');$('#tab-'+b.dataset.tab).classList.add('on');}));
+function toggleArt(){S.art=!S.art;document.body.classList.toggle('art',S.art);
+ if(S.art){S._savedView={overlay:S.view.overlay,cont1:S.view.cont1,cont2:S.view.cont2,arrows:S.view.arrows,sunElev:S.view.sunElev,sunSide:S.view.sunSide};S.view.overlay=0;S.view.cont1=0;S.view.cont2=0;S.view.arrows=0;S.artT0=performance.now()-S.artPeriod*1000*0.12;if(!S.playing)$('#play').click();}
+ else if(S._savedView){Object.assign(S.view,S._savedView);syncViewbar();drawLegend();}
+ $('#artBtn').classList.toggle('on',S.art);resize();}
+function togglePanel(){$('#panel').classList.toggle('hidden');const hid=$('#panel').classList.contains('hidden');$('#obs').classList.toggle('wide',hid);$('#stack').classList.toggle('wide',hid);resize();}
+$('#panelToggle').addEventListener('click',togglePanel);
+$('#play').addEventListener('click',()=>{S.playing=!S.playing;$('#play').textContent=S.playing?'❚❚ 停止':'▶ 再生';});
+$('#stepBtn').addEventListener('click',()=>{S.playing=false;$('#play').textContent='▶ 再生';step();});
+$('#resetBtn').addEventListener('click',()=>{fullReset();});
+$('#artBtn').addEventListener('click',toggleArt);$('#obs').addEventListener('click',()=>$('#obs').classList.toggle('min'));$('#infoBtn').addEventListener('click',()=>$('#modal').classList.add('on'));$('#modalClose').addEventListener('click',()=>$('#modal').classList.remove('on'));$('#modal').addEventListener('click',e=>{if(e.target.id==='modal')$('#modal').classList.remove('on');});
+window.addEventListener('keydown',e=>{if(e.target.tagName==='INPUT'||e.target.tagName==='SELECT')return;
+ if(e.code==='Space'){e.preventDefault();$('#play').click();}else if(e.key==='r'||e.key==='R'){fullReset();}else if(e.key==='h'||e.key==='H'){togglePanel();}else if(e.key==='a'||e.key==='A'){toggleArt();}else if(e.key==='Escape'&&S.art){toggleArt();}
+ else if(e.key>='0'&&e.key<='9'){const map={'0':0,'1':1,'2':2,'3':3,'4':5,'5':6,'6':7,'7':9,'8':11,'9':16};if(map[e.key]!==undefined)setOverlay(map[e.key]);}});
+function loadPreset(i){S.playing=false;$('#play').textContent='▶ 再生';const p=PRESETS[i];applyPreset(p);S.dx=S.Lx/S.nx;S.Lz=S.dx*S.nz;fullReset();}
+
+canvas.addEventListener('pointermove',e=>{mouse.x=e.clientX;mouse.y=e.clientY;mouse.px=e.clientX;mouse.py=e.clientY;mouse.shift=e.shiftKey;
+ const H=window.innerHeight;mouse.inside=e.clientX>=rect.x&&e.clientX<=rect.x+rect.w&&(H-e.clientY)>=rect.y&&(H-e.clientY)<=rect.y+rect.h;
+ if(mouse.down&&(S.tool==='raise'||S.tool==='paint'))brush(e);});
+canvas.addEventListener('pointerleave',()=>{mouse.inside=false;});
+canvas.addEventListener('pointerdown',e=>{if(e.button!==0)return;mouse.down=true;mouse.shift=e.shiftKey;canvas.setPointerCapture(e.pointerId);const [x,z]=domainXY(e.clientX,e.clientY);if(x<0||x>S.Lx||z<0||z>S.Lz)return;
+ if(S.tool==='parcel'||S.tool==='drop'){const kind=S.tool==='parcel'?1:2;
+  // click near existing particle → select
+  readParticles();let best=-1,bd=1e18;for(let i=0;i<S.partN;i++){if(partBuf[i*4+3]<0.5)continue;const dx=partBuf[i*4]-x,dz=partBuf[i*4+1]-z;const d=dx*dx+dz*dz;if(d<bd){bd=d;best=i;}}
+  const tol=(S.Lx/rect.w*10);if(best>=0&&bd<tol*tol){S.sel=best;selHist=[];return;}
+  if(e.shiftKey){for(let i=0;i<12;i++)addParticle(x+(Math.random()-0.5)*2000,Math.max(S.dx,z+(Math.random()-0.5)*800),kind);}else addParticle(x,z,kind);}
+ else if(S.tool==='bubble'){bubble(x,z,e.shiftKey?-S.bubbleAmp:S.bubbleAmp,S.bubbleR);}
+ else if(S.tool==='raise'||S.tool==='paint'){lastBrush=performance.now();brush(e);}});
+canvas.addEventListener('pointerup',()=>{mouse.down=false;});
+let lastBrush=0;
+function brush(e){if(S.mode===1)return;const [x]=domainXY(e.clientX,e.clientY);const now=performance.now();const dtb=Math.min(0.1,(now-lastBrush)/1000||0.016);lastBrush=now;
+ const i0=clamp(Math.floor((x-S.brushR*1.5)/S.dx),0,S.nx-1),i1=clamp(Math.ceil((x+S.brushR*1.5)/S.dx),0,S.nx-1);
+ for(let i=i0;i<=i1;i++){const xi=(i+0.5)*S.dx;const w=Math.exp(-((xi-x)*(xi-x))/(S.brushR*S.brushR*0.5));
+  if(S.tool==='raise'){terrH[i]=clamp(terrH[i]+(mouse.shift?-1:1)*S.brushAmp*dtb*w,0,S.Lz*0.85);if(terrM[i]===0&&terrH[i]>5)terrM[i]=1;}
+  else{if(w>0.3){terrM[i]=S.paintMat;if(S.paintMat===0)terrH[i]=0;}}}
+ uploadTerrain();}
+
+// ------------------------------------------------------------
+// Benchmark + boot
+// ------------------------------------------------------------
+function benchmark(){const w=1024,h=384;const a=mkTex(w,h),b=mkTex(w,h),d=mkTex(w,h),m=mkTex(w,h),base=mkTex(h,2),terr=mkTex(w,1);
+ const c={uN:[w,h],uDx:60,uDt:2,uMode:0,uBase:base,uMask:m,uTerr:terr};
+ for(let i=0;i<8;i++){draw(P.jac,{...c,uP:a,uDiv:d},[b]);}gl.finish();
+ const t0=performance.now();const N=40;for(let i=0;i<N;i++){draw(P.jac,{...c,uP:(i&1)?b:a,uDiv:d},[(i&1)?a:b]);}gl.finish();const t1=performance.now();
+ [a,b,d,m,base,terr].forEach(delTex);clearFboCache();
+ const msPerPxPass=(t1-t0)/N/(w*h);return msPerPxPass;}
+function chooseGrid(msPP){const budget=11.0;const passes=(14+10*S.vcycles+S.jacobi)*S.substeps;let pick=0;
+ for(let i=0;i<GRIDS.length-1;i++){const px=GRIDS[i][0]*GRIDS[i][1];const ms=passes*px*msPP*1.2;if(ms<=budget)pick=i;} // 自動選択の上限は 1536×512 (2304 は手動)
+ const px=GRIDS[pick][0]*GRIDS[pick][1];S.benchMsg=`${(1/(msPP*1e6)).toFixed(2)} Gpx/s → 推定 ${(passes*px*msPP*1.2).toFixed(1)} ms/frame で ${GRIDS[pick][0]}×${GRIDS[pick][1]} を選択`;return GRIDS[pick];}
+
+let lastT=performance.now(),fpsAcc=0,fpsN=0;
+function loop(){const now=performance.now();const dtms=now-lastT;lastT=now;fpsAcc+=dtms;fpsN++;
+ if(S.playing){const t0=performance.now();for(let i=0;i<S.substeps;i++)step();S.msPerStep=(performance.now()-t0)/S.substeps;}
+ render();
+ if(now-lastCursor>90){lastCursor=now;readParticles();updateCursor();updateTracer();}
+ if(now-lastObs>1000){lastObs=now;observe();updateCond();if(fpsN>0){S.fps=1000*fpsN/fpsAcc;fpsAcc=0;fpsN=0;}
+  $('#stat').textContent=`${S.nx}×${S.nz} · Δ ${S.dx.toFixed(0)} m · ${S.fps.toFixed(0)} fps · ${S.msPerStep.toFixed(1)} ms/step`;}
+ const t=S.time;const hh=Math.floor(t/3600),mm=Math.floor(t/60)%60,ss=Math.floor(t)%60;$('#clock').innerHTML=`${String(hh).padStart(2,'0')}:${String(mm).padStart(2,'0')}:${String(ss).padStart(2,'0')}<span id="speed">×${S.playing?(S.substeps*S.dt*S.fps).toFixed(0):0} 実時間</span>`;
+ requestAnimationFrame(loop);}
+
+function boot(){try{const msPP=benchmark();const g=chooseGrid(msPP);$('#splashMsg').textContent=S.benchMsg;
+  S.nx=g[0];S.nz=g[1];S.dx=S.Lx/S.nx;S.Lz=S.dx*S.nz;S.dt=autoDt();allocTextures();resize();
+  applyPreset(PRESETS[0]);fullReset();$('#preset').value=0;calibrate();
+  setTimeout(()=>{$('#splash').style.opacity=0;setTimeout(()=>$('#splash').remove(),600);},600);
+  if(location.hash.startsWith('#autotest')){autotest(parseInt(location.hash.slice(9))||0);return;}
+  S.playing=true;$('#play').textContent='❚❚ 停止';requestAnimationFrame(loop);}
+
+ catch(err){fatal(String(err.stack||err));$('#splashMsg').textContent='初期化に失敗しました';}}
+function calibrate(){// measure real step cost and step the grid down until a frame fits the budget
+ for(let guard=0;guard<6;guard++){gl.finish();const t0=performance.now();for(let i=0;i<4;i++)step();gl.finish();const ms=(performance.now()-t0)/4*S.substeps;
+  const gi=GRIDS.findIndex(g=>g[0]===S.nx);S.benchMsg+=` / 実測 ${ms.toFixed(1)} ms/frame @ ${S.nx}×${S.nz}`;
+  if(ms>12&&gi>0){const g=GRIDS[gi-1];setGrid(g[0],g[1]);fullReset();}else break;}
+ fullReset();}
+function autotest(pi){applyPreset(PRESETS[pi]);const Q=new URLSearchParams(location.search);
+ if(Q.get('env'))Object.assign(S.env,JSON.parse(Q.get('env')));if(Q.get('streams'))S.streams=JSON.parse(Q.get('streams'));if(Q.get('terrain'))S.pendingTerrain=JSON.parse(Q.get('terrain'));if(Q.get('micro'))Object.assign(S.micro,JSON.parse(Q.get('micro')));if(Q.get('num'))Object.assign(S.num,JSON.parse(Q.get('num')));if(Q.get('nobubble'))S.pendingBubble=null;if(Q.get('jac'))S.jacobi=+Q.get('jac');if(Q.get('vc'))S.vcycles=+Q.get('vc');if(Q.get('lat'))S.lat=+Q.get('lat');if(Q.get('mg'))Object.assign(S.mg,JSON.parse(Q.get('mg')));if(Q.get('latW'))S.num.latW=+Q.get('latW');if(Q.get('dt'))S.dt=+Q.get('dt');
+ fullReset();$('#preset').value=pi;let n=0;const total=+(new URLSearchParams(location.search).get('steps')||600);
+ const gridQ=new URLSearchParams(location.search).get('grid');if(gridQ){const g=GRIDS[+gridQ];setGrid(g[0],g[1]);if(Q.get('dt'))S.dt=+Q.get('dt');fullReset();}
+ if(Q.get('mgtest')){const res=[];const nx=S.nx,nz=S.nz;const divB=new Float32Array(nx*nz*4),mB=new Float32Array(nx*nz*4);gl.bindFramebuffer(gl.FRAMEBUFFER,fboFor([T.mask]));gl.readPixels(0,0,nx,nz,gl.RGBA,gl.FLOAT,mB);
+  function divStat(){draw(P.div,{...common(),uVel:T.velA},[T.div]);gl.bindFramebuffer(gl.FRAMEBUFFER,fboFor([T.div]));gl.readPixels(0,0,nx,nz,gl.RGBA,gl.FLOAT,divB);let mx=0,rms=0,n=0,nan=0;for(let k=1;k<nz-1;k++)for(let i=1;i<nx-1;i++){const o=(k*nx+i)*4;if(mB[o]>0.5)continue;const d=divB[o];if(Number.isNaN(d)){nan++;continue;}mx=Math.max(mx,Math.abs(d));rms+=d*d;n++;}return {mx,rms:Math.sqrt(rms/n),nan};}
+  // perturb velocity with a bubble-like divergent field via bubble+one advect? simpler: run 3 steps without pressure? just use current state after 20 steps
+  if(!Q.get('nostep'))for(let i=0;i<20;i++)step();else{bubble(S.Lx*0.4,1500,3,1500);draw(P.force,{...common(),uVel:T.velA,uTh:T.thA,uHy:T.hyA,uG:g0,uNu:1,uCs:0.17,uSpH:0.14,uSpRate:0.02,uLatW:2500,uLatTau:60,uNudgeTau:30,uCh:0,uCe:0,uCd:0,uRadTop:0,uRadClr:0,uNoise:0,uTime:0,...airUniforms()},[T.velB,T.thB]);swap('velA','velB');swap('thA','thB');}
+  const pB=new Float32Array(nx*nz*4);
+  for(let trial=0;trial<6;trial++){const before=divStat();const c=common();draw(P.div,{...c,uVel:T.velA},[T.div]);
+   const L0=lvl(0);vcycle(0,L0);T.pA=L0.p;T.pB=L0.t;gl.bindFramebuffer(gl.FRAMEBUFFER,fboFor([T.pA]));gl.readPixels(0,0,nx,nz,gl.RGBA,gl.FLOAT,pB);let pmax=0,pnan=0;for(let i=0;i<pB.length;i+=4){if(Number.isNaN(pB[i]))pnan++;else pmax=Math.max(pmax,Math.abs(pB[i]));}
+   // residual check at level0
+   draw(P.resid,{...c,uP:T.pA,uDiv:T.div},[T.tmp1]);gl.bindFramebuffer(gl.FRAMEBUFFER,fboFor([T.tmp1]));gl.readPixels(0,0,nx,nz,gl.RGBA,gl.FLOAT,pB);let rmax=0;for(let k=1;k<nz-1;k++)for(let i=1;i<nx-1;i++){const o=(k*nx+i)*4;if(mB[o]>0.5)continue;rmax=Math.max(rmax,Math.abs(pB[o]));}
+   draw(P.grad,{...c,uP:T.pA,uVel:T.velA},[T.velB]);swap('velA','velB');const after=divStat();res.push({trial,before,after,pmax,pnan,rmax});}
+  // coarse level masks: count fluid cells per level
+  const lv=T.mg.map(L=>{const b=new Float32Array(L.w*L.h*4);gl.bindFramebuffer(gl.FRAMEBUFFER,fboFor([L.mask]));gl.readPixels(0,0,L.w,L.h,gl.RGBA,gl.FLOAT,b);let sol=0;for(let i=0;i<b.length;i+=4)sol+=b[i];return [L.w,L.h,sol];});
+  console.log('AUTOTEST '+JSON.stringify({mgtest:res,levels:lv}));document.title='DONE';return;}
+ if(Q.get('composite'))$('#vbComposite').click();if(Q.get('art')){toggleArt();S.playing=false;S.artDiurnal=false;S.view.sunElev=+Q.get('art');}if(Q.get('tool')){document.querySelector('#tools button[data-tool='+Q.get('tool')+']').click();}
+ function chunk(){const t0=performance.now();for(let i=0;i<25&&n<total;i++){step();n++;}render();
+  if(n<total){setTimeout(chunk,0);}else{observe();let nan=0,qcmax=0,qimax=0,qrmax=0;for(let i=0;i<obsBuf.length;i++){if(Number.isNaN(obsBuf[i]))nan++;}for(let i=0;i<obsBuf.length;i+=4){qcmax=Math.max(qcmax,obsBuf[i]);qrmax=Math.max(qrmax,obsBuf[i+1]);qimax=Math.max(qimax,obsBuf[i+2]);}
+   let vmax=0;for(let i=0;i<obsVel.length;i+=4){vmax=Math.max(vmax,Math.hypot(obsVel[i],obsVel[i+1]));}
+   const thB=new Float32Array(S.nx*S.nz*4);gl.bindFramebuffer(gl.FRAMEBUFFER,fboFor([T.thA]));gl.readPixels(0,0,S.nx,S.nz,gl.RGBA,gl.FLOAT,thB);let dthMax=-1e9,dthMin=1e9,rhMax=0;
+   for(let k=0;k<S.nz;k++){const th0=baseRow0[k*4],pi0=baseRow0[k*4+2];const p=p00*Math.pow(pi0,3.5);for(let i=0;i<S.nx;i++){const o=(k*S.nx+i)*4;if(obsBuf[o]===0&&obsVel[o]===0&&obsVel[o+1]===0&&thB[o]===th0)continue;const d=thB[o]-th0;if(d>dthMax)dthMax=d;if(d<dthMin)dthMin=d;const rh=thB[o+1]/qsat(esw(thB[o]*pi0),p);if(rh>rhMax)rhMax=rh;}}
+   const divB=new Float32Array(S.nx*S.nz*4);draw(P.div,{...common(),uVel:T.velA},[T.div]);gl.bindFramebuffer(gl.FRAMEBUFFER,fboFor([T.div]));gl.readPixels(0,0,S.nx,S.nz,gl.RGBA,gl.FLOAT,divB);
+   const mB=new Float32Array(S.nx*S.nz*4);gl.bindFramebuffer(gl.FRAMEBUFFER,fboFor([T.mask]));gl.readPixels(0,0,S.nx,S.nz,gl.RGBA,gl.FLOAT,mB);
+   let divMax=0,divRms=0,nI=0;for(let k=1;k<S.nz-1;k++)for(let i=1;i<S.nx-1;i++){const o=(k*S.nx+i)*4;if(mB[o]>0.5||mB[o-4]>0.5||mB[o+4]>0.5||mB[o-S.nx*4]>0.5||mB[o+S.nx*4]>0.5)continue;const d=Math.abs(divB[o])/baseRow0[k*4+1];divMax=Math.max(divMax,d);divRms+=d*d;nI++;}divRms=Math.sqrt(divRms/Math.max(1,nI));
+   let loc={};{let a=-1e9,b=1e9;for(let k=0;k<S.nz;k++){const th0=baseRow0[k*4];for(let i=0;i<S.nx;i++){const o=(k*S.nx+i)*4;if(mB[o]>0.5)continue;const d=thB[o]-th0;if(d>a){a=d;loc.thMaxAt=[+(i*S.dx/1000).toFixed(1),+(k*S.dx/1000).toFixed(1)];}if(d<b){b=d;loc.thMinAt=[+(i*S.dx/1000).toFixed(1),+(k*S.dx/1000).toFixed(1)];}}}
+    let wm=0;for(let k=0;k<S.nz;k++)for(let i=0;i<S.nx;i++){const o=(k*S.nx+i)*4;if(Math.abs(obsVel[o+1])>wm){wm=Math.abs(obsVel[o+1]);loc.wMaxAt=[+(i*S.dx/1000).toFixed(1),+(k*S.dx/1000).toFixed(1)];}}}
+   console.log('AUTOTEST '+JSON.stringify({preset:PRESETS[pi].n,steps:n,simMin:S.time/60,grid:[S.nx,S.nz],cls:$('#obsCls').textContent,obs:$('#obsG').innerText.replace(/\n/g,' | '),qcmax,qrmax,qimax,vmax,dthMax,dthMin,rhMax,divMax,divRms,loc,nan,ms:(performance.now()-t0)/25}));document.title='DONE';}}
+ chunk();}
+setTimeout(boot,50);
+</script>
