@@ -33,7 +33,11 @@ input[type=checkbox]{accent-color:var(--accent2)}
 #brand{display:flex;align-items:baseline;gap:10px;min-width:0}
 #brand h1{font-family:var(--disp);font-weight:500;font-size:22px;letter-spacing:.06em;margin:0;color:#f3f6fb}
 #brand small{color:var(--muted);letter-spacing:.14em;font-size:10.5px;text-transform:uppercase;white-space:nowrap}
-#top .grow{flex:1}
+#top .grow{flex:1;min-width:0}
+#top button,#top .tbtn,#clock,#brand{white-space:nowrap;flex-shrink:0}
+#preset{flex:0 1 auto;min-width:110px;max-width:34vw;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+@media (max-width:1400px){#stat{display:none}}
+@media (max-width:1150px){#brand small{display:none}}
 #clock{font-family:var(--mono);font-size:14px;letter-spacing:.04em;color:#f3f6fb;white-space:nowrap}
 #clock span{color:var(--muted);font-size:11px;margin-left:8px}
 .tbtn{display:flex;gap:6px;align-items:center}
